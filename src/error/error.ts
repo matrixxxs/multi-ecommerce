@@ -29,7 +29,7 @@ export const errorHandler = (
   next: NextFunction,
 ) => {
   if (err instanceof AppError) {
-    res.status(err.statusCode).json({ error: err.message });
+    return res.status(err.statusCode).json({ error: err.message });
   }
   console.log(err.message);
   res.status(500).json({ message: "something wrong happened" });
