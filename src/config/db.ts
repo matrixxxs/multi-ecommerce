@@ -8,4 +8,15 @@ const pool = new Pool({
   port: Number(process.env.DB_PORT),
 });
 
+pool.query("SELECT NOW()", (err, res) => {
+  if (err) {
+    console.log("DB connection error:", err);
+    process.exit(1);
+  } else {
+    console.log("connection is working", res?.rows[0].now);
+  }
+});
+pool.on("error", (err) => {
+  console.log("an unxpected error occured", err);
+});
 export default pool;
