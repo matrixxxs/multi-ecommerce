@@ -13,7 +13,6 @@ export const authMiddleware = (
   const token = authHeader.split(" ")[1] as string;
   try {
     const decoded = verifyToken(token);
-
     req.admin = decoded;
     next();
   } catch (error) {
