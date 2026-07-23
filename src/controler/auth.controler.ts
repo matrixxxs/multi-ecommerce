@@ -23,11 +23,7 @@ export const login = async (
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
-  const { email, password, store_id } = req.body;
-  const token = verifyCreditals({
-    email,
-    password,
-    store_id,
-  });
+  const { email, password } = req.body;
+  const token = await verifyCreditals(email, password);
   res.status(200).json({ token });
 };

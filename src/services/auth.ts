@@ -39,19 +39,19 @@ export const createUser = async (data: CreateUsers): Promise<Users> => {
 };
 
 export const verifyCreditals = async (
-  password: string,
   email: string,
+  password: string,
 ): Promise<Users> => {
   const select = await pool.query<UsersWithPassword>(
     "SELECT id,store_id,email,password FROM ecommerce.admin_users WHERE email = $1",
     [email],
   );
   const user = select.rows[0];
-  if (!user.password) {
-    throw new UnauthorizedError("Invalid credentials");
+  if (!user) {
+    throw new UnauthorizedError("Incorrect email or password");
   }
 
-  const isMatch = await bcrypt.compare(user.password, password);
+  const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
     throw new UnauthorizedError("Incorrect email or password");
   }
