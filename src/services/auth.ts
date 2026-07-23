@@ -1,32 +1,63 @@
 import bcrypt from "bcrypt";
 import pool from "../config/db";
-import { UnauthorizedError, NotAllowed } from "../error/error";
+import { UnauthorizedError, NotAllowed, ConflictError } from "../error/error";
 const SALTROUND = 10;
-interface Signup {
+
+interface CreateUsers {
   email: string;
   password: string;
+  store_id: string;
 }
 
-export const createUser = async (user: Signup) => {
-  const password_hashed = bcrypt.hash(user.password, SALTROUND);
-  const result = await pool.query<Signup>(
-    "INSERT INTO admin_users (email,password) VALUES ($1,$2) RETURNING email,password",
-    [user.email, password_hashed],
-  );
+export interface Users {
+  id: string;
+  email: string;
+  store_id: string;
+}
+
+interface UsersWithPassword extends Users {
+  password: string;
+}
+export const createUser = async (data: CreateUsers): Promise<Users> => {
+  try {
+    const password_hashed = await bcrypt.hash(data.password, SALTROUND);
+    const result = await pool.query<Users>(
+      "INSERT INTO ecommerce.admin_users (email,password,store_id) VALUES ($1,$2,$3) RETURNING id,email,store_id",
+      [data.email, password_hashed, data.store_id],
+    );
+    const user = result.rows[0];
+    if (!user) {
+      throw new Error("Failed to create user");
+    }
+    return user;
+  } catch (err: any) {
+    if (err.code === "23505") {
+      throw new ConflictError("email already exist");
+    }
+    throw err;
+  }
 };
 
-export const verifyCreditals = async (user: Signup) => {
-  const select = await pool.query<Signup>(
-    "SELECT email,password FROM admin_users WHERE email = $1",
-    [user.email],
+export const verifyCreditals = async (
+  password: string,
+  email: string,
+): Promise<Users> => {
+  const select = await pool.query<UsersWithPassword>(
+    "SELECT id,store_id,email,password FROM ecommerce.admin_users WHERE email = $1",
+    [email],
   );
-  const password = select.rows[0]?.password;
-  if (!password) {
+  const user = select.rows[0];
+  if (!user.password) {
     throw new UnauthorizedError("Invalid credentials");
   }
 
   const isMatch = await bcrypt.compare(user.password, password);
   if (!isMatch) {
-    throw new NotAllowed("Incorrect email or password");
+    throw new UnauthorizedError("Incorrect email or password");
   }
+  return {
+    id: user.id,
+    email: user.email,
+    store_id: user.store_id,
+  };
 };

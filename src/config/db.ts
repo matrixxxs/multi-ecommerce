@@ -20,3 +20,6 @@ pool.on("error", (err) => {
   console.log("an unxpected error occured", err);
 });
 export default pool;
+pool.query("SELECT current_database(), current_schema()", (err, res) => {
+  console.log(res?.rows);
+});

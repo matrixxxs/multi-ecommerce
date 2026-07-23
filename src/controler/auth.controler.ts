@@ -8,11 +8,12 @@ export const signup = async (
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
-  const { email, password } = req.body;
+  const { email, password, store_id } = req.body;
 
   const token = await createUser({
     email,
     password,
+    store_id,
   });
   res.status(200).json({ token });
 };
@@ -22,10 +23,11 @@ export const login = async (
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
-  const { email, password } = req.body;
+  const { email, password, store_id } = req.body;
   const token = verifyCreditals({
     email,
     password,
+    store_id,
   });
   res.status(200).json({ token });
 };

@@ -26,6 +26,11 @@ export class NotAllowed extends AppError {
     super(message, 400);
   }
 }
+export class ConflictError extends AppError {
+  constructor(message: string) {
+    super(message, 409);
+  }
+}
 
 export const errorHandler = (
   err: Error,
