@@ -10,3 +10,7 @@ export const admin_login_schema = z.object({
   email: z.string().trim().email(),
   password: z.string().min(8),
 });
+
+export const admin_forget_password_schema = z.object({
+  email: z.string().trim().email(),
+});

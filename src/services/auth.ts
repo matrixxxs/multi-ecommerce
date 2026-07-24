@@ -1,6 +1,8 @@
 import bcrypt from "bcrypt";
 import pool from "../config/db";
-import { UnauthorizedError, NotAllowed, ConflictError } from "../error/error";
+import crypto, { hash } from "crypto";
+import { UnauthorizedError, FakeStatus, ConflictError } from "../error/error";
+import { token } from "morgan";
 const SALTROUND = 10;
 
 interface CreateUsers {
@@ -60,4 +62,47 @@ export const verifyCreditals = async (
     email: user.email,
     store_id: user.store_id,
   };
+};
+
+export interface UpdatePassword {
+  email: string;
+  newPassword: string;
+}
+interface UserReset {
+  id: string;
+  email: string;
+}
+interface InsertToken {
+  token: string;
+  admin_id: string;
+  used: boolean;
+}
+export const createResetToken = async (email: string): Promise<string> => {
+  const search = await pool.query<UserReset>(
+    "SELECT id,email FROM ecommerce.admin_users WHERE email =$1",
+    [email],
+  );
+  const lookUp = search.rows[0];
+  if (!lookUp) {
+    throw new FakeStatus("If this email exists, a reset link has been sent");
+  }
+  const token = crypto.randomBytes(32).toString("hex");
+  const token_hash = crypto.createHash("sha256").update(token).digest("hex");
+  const insert_token = await pool.query<InsertToken>(
+    "INSERT INTO ecommerce.password_reset_token(admin_id,token,used) VALUES ($1,$2,$3) RETURNING admin_id,token,used",
+    [lookUp.id, token_hash, false],
+  );
+
+  return token;
+};
+
+export const verifyResetToken = async (token: string): Promise<void> => {
+  const token_hash = crypto.createHash("sha256").update(token).digest("hex");
+
+  const result = await pool.query(
+    "SELECT id,admin_id,used FROM ecommerce.password_reset_token WHERE token = $1",
+    [token_hash],
+  );
+
+  const row = result.rows[0];
 };

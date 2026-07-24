@@ -32,6 +32,12 @@ export class ConflictError extends AppError {
   }
 }
 
+export class FakeStatus extends AppError {
+  constructor(message: string) {
+    super(message, 200);
+  }
+}
+
 export const errorHandler = (
   err: Error,
   req: Request,
