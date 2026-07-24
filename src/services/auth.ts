@@ -1,13 +1,12 @@
 import bcrypt from "bcrypt";
 import pool from "../config/db";
-import crypto, { hash } from "crypto";
+import crypto from "crypto";
 import {
   UnauthorizedError,
   FakeStatus,
   ConflictError,
   NotAllowed,
 } from "../error/error";
-import { token } from "morgan";
 const SALTROUND = 10;
 
 interface CreateUsers {
@@ -101,7 +100,7 @@ export const createResetToken = async (email: string): Promise<string> => {
   const token = crypto.randomBytes(32).toString("hex");
   const token_hash = crypto.createHash("sha256").update(token).digest("hex");
   const insert_token = await pool.query<InsertToken>(
-    "INSERT INTO ecommerce.password_reset_token(admin_id,token,used) VALUES ($1,$2,$3) ",
+    "INSERT INTO ecommerce.password_reset_tokens (admin_id,token,used) VALUES ($1,$2,$3) ",
     [lookUp.id, token_hash, false],
   );
 
@@ -117,7 +116,7 @@ export const verifyResetToken = async (
   const token_hash = crypto.createHash("sha256").update(token).digest("hex");
 
   const result = await pool.query<VerifyToken>(
-    "SELECT id,admin_id,used,expires_at FROM ecommerce.password_reset_token WHERE token = $1",
+    "SELECT id,admin_id,used,expires_at FROM ecommerce.password_reset_tokens WHERE token = $1",
     [token_hash],
   );
 
@@ -135,4 +134,31 @@ export const verifyResetToken = async (
     id: row.id,
     admin_id: row.admin_id,
   };
+};
+
+export const resetPassword = async (token: string, newPassword: string) => {
+  const user = await verifyResetToken(token);
+  const hash_newPassword = await bcrypt.hash(newPassword, SALTROUND);
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    await client.query(
+      "UPDATE ecommerce.admin_users SET password = $1 WHERE id = $2 ",
+      [hash_newPassword, user.admin_id],
+    );
+
+    await client.query(
+      "UPDATE ecommerce.password_reset_tokens SET used = true WHERE id = $1",
+      [user.id],
+    );
+
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 };
