@@ -24,6 +24,8 @@ export interface Users {
 interface UsersWithPassword extends Users {
   password: string;
 }
+
+// Create a new admin user
 export const createUser = async (data: CreateUsers): Promise<Users> => {
   try {
     const password_hashed = await bcrypt.hash(data.password, SALTROUND);
@@ -44,6 +46,7 @@ export const createUser = async (data: CreateUsers): Promise<Users> => {
   }
 };
 
+// Check email/password match for login
 export const verifyCreditals = async (
   email: string,
   password: string,
@@ -84,6 +87,8 @@ interface VerifyToken {
   used: boolean;
   expires_at: Date;
 }
+
+// Generate + store a password reset token for a given email
 export const createResetToken = async (email: string): Promise<string> => {
   const search = await pool.query<UserReset>(
     "SELECT id,email FROM ecommerce.admin_users WHERE email = $1",
@@ -106,6 +111,7 @@ export const createResetToken = async (email: string): Promise<string> => {
   return token;
 };
 
+// Check a raw reset token is valid, unused, and unexpired
 export const verifyResetToken = async (
   token: string,
 ): Promise<{ id: string; admin_id: string }> => {
@@ -130,6 +136,7 @@ export const verifyResetToken = async (
   };
 };
 
+// Verify token, then update password + mark token used (transaction)
 export const resetPassword = async (token: string, newPassword: string) => {
   const user = await verifyResetToken(token);
   const hash_newPassword = await bcrypt.hash(newPassword, SALTROUND);
