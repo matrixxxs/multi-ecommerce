@@ -90,20 +90,19 @@ interface VerifyToken {
 
 // Generate + store a password reset token for a given email
 export const createResetToken = async (email: string): Promise<string> => {
+  const search = await pool.query<UserReset>(
+    "SELECT id,email FROM ecommerce.admin_users WHERE email = $1",
+    [email],
+  );
+  const lookup = search.rows[0];
+  if (!lookup) {
+    throw new FakeStatus("A reset link as been sent");
+  }
   const token = crypto.randomBytes(32).toString("hex");
   const hash_token = crypto.createHash("sha256").update(token).digest("hex");
-
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    const search = await client.query<UserReset>(
-      "SELECT id,email FROM ecommerce.admin_users WHERE email = $1",
-      [email],
-    );
-    const lookup = search.rows[0];
-    if (!lookup) {
-      throw new FakeStatus("A reset link as been sent");
-    }
     await client.query(
       "UPDATE ecommerce.password_reset_tokens SET used = true WHERE admin_id = $1",
       [lookup.id],
