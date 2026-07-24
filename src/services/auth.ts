@@ -1,7 +1,12 @@
 import bcrypt from "bcrypt";
 import pool from "../config/db";
 import crypto, { hash } from "crypto";
-import { UnauthorizedError, FakeStatus, ConflictError } from "../error/error";
+import {
+  UnauthorizedError,
+  FakeStatus,
+  ConflictError,
+  NotAllowed,
+} from "../error/error";
 import { token } from "morgan";
 const SALTROUND = 10;
 
@@ -77,6 +82,13 @@ interface InsertToken {
   admin_id: string;
   used: boolean;
 }
+
+interface VerifyToken {
+  id: string;
+  admin_id: string;
+  used: boolean;
+  expires_at: Date;
+}
 export const createResetToken = async (email: string): Promise<string> => {
   const search = await pool.query<UserReset>(
     "SELECT id,email FROM ecommerce.admin_users WHERE email =$1",
@@ -89,20 +101,38 @@ export const createResetToken = async (email: string): Promise<string> => {
   const token = crypto.randomBytes(32).toString("hex");
   const token_hash = crypto.createHash("sha256").update(token).digest("hex");
   const insert_token = await pool.query<InsertToken>(
-    "INSERT INTO ecommerce.password_reset_token(admin_id,token,used) VALUES ($1,$2,$3) RETURNING admin_id,token,used",
+    "INSERT INTO ecommerce.password_reset_token(admin_id,token,used) VALUES ($1,$2,$3) ",
     [lookUp.id, token_hash, false],
   );
 
   return token;
 };
 
-export const verifyResetToken = async (token: string): Promise<void> => {
+export const verifyResetToken = async (
+  token: string,
+): Promise<{
+  id: string;
+  admin_id: string;
+}> => {
   const token_hash = crypto.createHash("sha256").update(token).digest("hex");
 
-  const result = await pool.query(
-    "SELECT id,admin_id,used FROM ecommerce.password_reset_token WHERE token = $1",
+  const result = await pool.query<VerifyToken>(
+    "SELECT id,admin_id,used,expires_at FROM ecommerce.password_reset_token WHERE token = $1",
     [token_hash],
   );
 
   const row = result.rows[0];
+  if (!row) {
+    throw new NotAllowed("Invalid or expired reset token");
+  }
+  if (row.used === true) {
+    throw new NotAllowed("Invalid or expired reset token");
+  }
+  if (new Date() > row.expires_at) {
+    throw new NotAllowed("Invalid or expired reset token");
+  }
+  return {
+    id: row.id,
+    admin_id: row.admin_id,
+  };
 };
