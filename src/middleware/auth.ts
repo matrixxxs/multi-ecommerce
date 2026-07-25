@@ -8,7 +8,7 @@ export const authMiddleware = (
 ) => {
   const authHeader = req.header("Authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    throw new UnauthorizedError("Acess denied");
+    throw new UnauthorizedError("Access denied");
   }
   const token = authHeader.split(" ")[1] as string;
   try {
@@ -16,6 +16,6 @@ export const authMiddleware = (
     req.admin = decoded;
     next();
   } catch (error) {
-    next(new UnauthorizedError("Invalid token oe expired token"));
+    next(new UnauthorizedError("Invalid token or expired token"));
   }
 };

@@ -3,11 +3,13 @@ import { ValidateBody } from "../middleware/validat";
 import { createProduct } from "../schemas/production/createProduct.schema";
 import { create } from "../controler/production/createProduct.controler";
 import { upload } from "../middleware/upload";
+import { authMiddleware } from "../middleware/auth";
 
 const router = express.Router();
 
 router.post(
-  "/create-product",
+  "/",
+  authMiddleware,
   upload.single("image"),
   ValidateBody(createProduct),
   create,

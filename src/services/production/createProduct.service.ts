@@ -25,9 +25,7 @@ interface UploadedImage {
   secure_url: string;
   public_id: string;
 }
-export const uploadImage = async (
-  buffer: Buffer,
-): Promise<{ secure_url: string; public_id: string }> => {
+export const uploadImage = async (buffer: Buffer): Promise<UploadedImage> => {
   const result = await uploadBufferToCloudinary(buffer);
   return {
     secure_url: result.secure_url,
