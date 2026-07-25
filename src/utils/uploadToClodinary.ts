@@ -24,3 +24,9 @@ export const uploadBufferToCloudinary = (
     uploadStream.end(buffer);
   });
 };
+
+export const deleteFromCloudinary = async (
+  public_id: string,
+): Promise<void> => {
+  await cloudinary.uploader.destroy(public_id);
+};

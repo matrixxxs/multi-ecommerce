@@ -1,10 +1,9 @@
 import z from "zod";
 
 export const createProduct = z.object({
-  name: z.string().trim(),
-  description: z.string(),
-  image_url: z.file(),
-  in_stock: z.boolean(),
+  name: z.string().trim().min(6),
+  description: z.string().min(10),
+  in_stock: z.coerce.boolean(),
   category: z.string(),
-  price: z.number(),
+  price: z.coerce.number().positive(),
 });
