@@ -3,12 +3,14 @@ import pool from "./config/db";
 import express from "express";
 import { errorHandler } from "./error/error";
 import authRoutes from "./routes/auth.routes";
+import resetRoutes from "./routes/reset.routes";
 
 const app = express();
 
 app.use(express.json());
 
 app.use("/auth", authRoutes);
+app.use("/auth", resetRoutes);
 
 console.log(process.env.DB_PASSWORD);
 app.use(errorHandler);

@@ -7,6 +7,7 @@ import {
   verifyResetToken,
 } from "../services/reset.service";
 
+import { sendResetEmail } from "../services/email.service";
 // Create a new admin user (manual onboarding, no auto-login)
 export const signup = async (
   req: Request,
@@ -44,6 +45,7 @@ export const resetToken = async (
   const { email } = req.body;
   const rawToken = await createResetToken(email);
 
+  await sendResetEmail(email, rawToken);
   res.status(200).json("A reset link as been sent");
 };
 
