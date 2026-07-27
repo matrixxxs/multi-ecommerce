@@ -31,6 +31,11 @@ export class ConflictError extends AppError {
     super(message, 409);
   }
 }
+export class NotFound extends AppError {
+  constructor(message: string) {
+    super(message, 404);
+  }
+}
 
 export class FakeStatus extends AppError {
   constructor(message: string) {
