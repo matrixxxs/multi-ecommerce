@@ -17,6 +17,7 @@ interface UpdatedProduct {
   image_url: string;
   image_public_id: string;
   price: number;
+  description: string;
 }
 
 interface UpdateProductData {
@@ -24,6 +25,7 @@ interface UpdateProductData {
   category?: string;
   in_stock?: boolean;
   price?: number;
+  description?: string;
 }
 
 const UploadImage = async (buffer: Buffer): Promise<UpdateImage> => {
@@ -66,14 +68,15 @@ export const updateProduct = async (
     const query = `
 UPDATE ecommerce.products
 SET 
-    name =  COLESCE($1,name),
-    category = ($2,category),
-    in_stock = ($3,in_stock),
+     name = COALESCE($1, name),
+    category = COALESCE($2, category),
+    in_stock = COALESCE($3, in_stock),
     image_url = $4,
     image_public_id = $5,
-    price = ($6,price)
-WHERE id = $7 
-AND store_id = $8
+    price = COALESCE($6, price),
+    description = COALESCE($7, description)
+WHERE id = $8
+AND store_id = $9
 RETURNING
     id,
     name,
@@ -81,6 +84,7 @@ RETURNING
     in_stock,
     image_url,
     image_public_id,
+    description,
     price;
 `;
     const value: Array<string | boolean | number | undefined> = [
@@ -90,6 +94,7 @@ RETURNING
       image_url,
       public_id,
       data.price,
+      data.description,
       id,
       store_id,
     ];
