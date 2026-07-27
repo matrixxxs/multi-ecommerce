@@ -1,18 +1,17 @@
-import path from "node:path";
-import z, { number } from "zod";
+import z from "zod";
 
-const product = z
+export const product = z
   .object({
     category: z.string().min(1).optional(),
     name: z.string().trim().min(1).optional(),
-    is_stock: z
+    in_stock: z
       .enum(["true", "false"])
       .transform((val) => val === "true")
       .optional(),
     minPrice: z.coerce.number().positive().optional(),
     maxPrice: z.coerce.number().positive().optional(),
-    limit: z.coerce.number().positive().optional(),
-    pages: z.coerce.number().positive().optional(),
+    limit: z.coerce.number().positive().max(100).default(10).optional(),
+    page: z.coerce.number().positive().default(1).optional(),
   })
   .refine(
     (data) =>
