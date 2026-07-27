@@ -1,9 +1,12 @@
 import z from "zod";
 
 export const update = z.object({
-  name: z.string().optional(),
+  name: z.string().trim().min(3).optional(),
+  description: z.string().min(10).optional(),
   categoty: z.string().optional(),
-  description: z.string().optional(),
+  in_stock: z
+    .enum(["true", "false"])
+    .transform((val) => val === "true")
+    .optional(),
   price: z.coerce.number().optional(),
-  image_ur: z.string().optional(),
 });

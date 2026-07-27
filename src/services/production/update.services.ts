@@ -29,7 +29,7 @@ interface UpdateProductData {
 const UploadImage = async (buffer: Buffer): Promise<UpdateImage> => {
   const result = await uploadBufferToCloudinary(buffer);
   if (!result) {
-    throw new Error("buffer");
+    throw new Error("Cloudinary upload failed: no result returned");
   }
   return {
     secure_url: result.secure_url,
@@ -37,7 +37,7 @@ const UploadImage = async (buffer: Buffer): Promise<UpdateImage> => {
   };
 };
 
-const updateProduct = async (
+export const updateProduct = async (
   data: UpdateProductData,
   store_id: string,
   id: string,
@@ -63,7 +63,26 @@ const updateProduct = async (
       image_url = uploadImage.secure_url;
       public_id = uploadImage.public_id;
     }
-    const query = ` UPDATE ecommerce.products SET name = $1, category = $2, in_stock = $3, image_url = $4, image_public_id = $5, price = $6 WHERE id = $7 AND store_id = $8 RETURNING id, name, category, in_stock, image_url,image_public_id price`;
+    const query = `
+UPDATE ecommerce.products
+SET 
+    name =  COLESCE($1,name),
+    category = ($2,category),
+    in_stock = ($3,in_stock),
+    image_url = $4,
+    image_public_id = $5,
+    price = ($6,price)
+WHERE id = $7 
+AND store_id = $8
+RETURNING
+    id,
+    name,
+    category,
+    in_stock,
+    image_url,
+    image_public_id,
+    price;
+`;
     const value: Array<string | boolean | number | undefined> = [
       data.name,
       data.category,
