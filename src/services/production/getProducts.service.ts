@@ -1,9 +1,10 @@
 import pool from "../../config/db";
 
 interface ProductTokens {
-  stire_id: string;
-  name: string;
-  category: string;
+  store_id: string;
+  name?: string;
+  category?: string;
+  in_stock?: boolean;
 }
 
 interface Product {
@@ -17,7 +18,7 @@ interface Product {
   price: number;
 }
 
-const getProduct = async (data: ProductTokens): Promise<Product> => {
+const getProducts = async (data: ProductTokens): Promise<Product[]> => {
   let query = `SELECT
     id,name,description,price,image_url,category,in_stock,store_id 
     FROM
@@ -25,14 +26,23 @@ const getProduct = async (data: ProductTokens): Promise<Product> => {
     WHERE 1=1 
     AND
     store_id = $1 `;
-  const value = [data.stire_id];
+  const values: Array<string | boolean> = [data.store_id];
+
   if (data.category) {
-    value.push(data.category);
-    query += `AND category =  ${value.length}`;
+    values.push(data.category);
+    query += `AND category = $${values.length} `;
   }
+
   if (data.name) {
-    value.push(`%${data.name}%`);
-    query += `AND ILIMT $${data.name}`;
+    values.push(`%${data.name}%`);
+    query += `AND name ILIKE $${values.length} `;
   }
-  const result = await pool.query<Product>(query, value);
+
+  if (data.in_stock !== undefined) {
+    values.push(data.in_stock);
+    query += `AND in_stock = $${values.length} `;
+  }
+
+  const result = await pool.query<Product>(query, values);
+  return result.rows[0];
 };
