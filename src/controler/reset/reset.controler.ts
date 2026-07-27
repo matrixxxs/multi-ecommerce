@@ -3,9 +3,9 @@ import {
   createResetToken,
   resetPassword,
   verifyResetToken,
-} from "../services/reset.service";
+} from "../../services/reset.service";
 
-import { sendResetEmail } from "../services/email.service";
+import { sendResetEmail } from "../../services/email.service";
 // Request a password reset link (generates + stores token)
 export const resetToken = async (
   req: Request,

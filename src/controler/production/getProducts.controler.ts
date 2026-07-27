@@ -1,3 +1,4 @@
+import { string } from "zod";
 import { product } from "../../schemas/production/getProducts.schema";
 import { getProducts } from "../../services/production/getProducts.service";
 import { Request, Response, NextFunction } from "express";
@@ -11,7 +12,10 @@ export const getProduct = async (
     const schema = product.parse(req.query);
     const result = await getProducts(schema, store_id);
     res.status(200).json(result);
-  } catch (error) {
+  } catch (error: unknown) {
     next(error);
+    if (error instanceof Error) {
+      console.log(error.message);
+    }
   }
 };

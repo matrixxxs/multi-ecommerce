@@ -4,7 +4,7 @@ import {
   forget_password,
   reset_password_schema,
 } from "../schemas/reset.schema";
-import { resetToken, reset_password } from "../controler/reset.controler";
+import { resetToken, reset_password } from "../controler/reset/reset.controler";
 
 const routes = express.Router();
 

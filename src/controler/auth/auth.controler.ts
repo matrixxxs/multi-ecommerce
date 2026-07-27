@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { signinToken } from "../utils/jwt";
-import { createUser, verifyCreditals } from "../services/auth.service";
+import { signinToken } from "../../utils/jwt";
+import { createUser, verifyCreditals } from "../../services/auth.service";
 
 // Create a new admin user (manual onboarding, no auto-login)
 export const signup = async (
