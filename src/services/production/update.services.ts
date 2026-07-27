@@ -1,4 +1,5 @@
 import pool from "../../config/db";
+import { NotFound } from "../../error/error";
 import {
   uploadBufferToCloudinary,
   deleteFromCloudinary,
@@ -14,6 +15,7 @@ interface UpdatedProduct {
   category: string;
   in_stock: boolean;
   image_url: string;
+  image_public_id: string;
   price: number;
 }
 
@@ -21,9 +23,7 @@ interface UpdateProductData {
   name?: string;
   category?: string;
   in_stock?: boolean;
-  image_url?: string;
   price?: number;
-  image_public_id: string;
 }
 
 const UploadImage = async (buffer: Buffer): Promise<UpdateImage> => {
@@ -49,50 +49,36 @@ const updateProduct = async (
       image_url: string;
       image_public_id: string;
     }>(
-      "SELECT image_public_id,image_url FROM ecommerce.products WHERE id = $1 AND store_id = $2",
+      "SELECT image_url, image_public_id FROM ecommerce.products WHERE id = $1 AND store_id = $2",
       [id, store_id],
     );
     if (select.rows.length === 0) {
-      throw new Error("Product not found.");
+      throw new NotFound("Product not found");
     }
     const oldImage = select.rows[0];
-    let imageUrl = oldImage.image_url;
-    let publicId = oldImage.image_public_id;
+    let image_url = oldImage.image_url;
+    let public_id = oldImage.image_public_id;
     if (buffer) {
       uploadImage = await UploadImage(buffer);
-      const newImage = uploadImage;
-      ((imageUrl = newImage.secure_url), (publicId = newImage.public_id));
+      image_url = uploadImage.secure_url;
+      public_id = uploadImage.public_id;
     }
-    const query = ` UPDATE ecommerce.products
-    SET
-    name = $1,
-    category = $2,
-    in_stock = $3,
-    image_url = $4,
-          image_public_id = $5,
-          price = $6
-      WHERE id = $7
-      AND store_id = $8
-      RETURNING
-      id,
-      name,
-      category,
-      in_stock,
-      image_url,
-      image_public_id
-      price;
-      `;
-    const value: Array<string | number | boolean | undefined> = [
+    const query = ` UPDATE ecommerce.products SET name = $1, category = $2, in_stock = $3, image_url = $4, image_public_id = $5, price = $6 WHERE id = $7 AND store_id = $8 RETURNING id, name, category, in_stock, image_url,image_public_id price`;
+    const value: Array<string | boolean | number | undefined> = [
       data.name,
       data.category,
       data.in_stock,
-      imageUrl,
-      publicId,
+      image_url,
+      public_id,
       data.price,
       id,
       store_id,
     ];
+
     const result = await pool.query<UpdatedProduct>(query, value);
+    if (result.rows.length === 0) {
+      throw new NotFound("Product not found");
+    }
     if (buffer && oldImage.image_public_id) {
       await deleteFromCloudinary(oldImage.image_public_id);
     }
@@ -101,11 +87,8 @@ const updateProduct = async (
     if (uploadImage) {
       try {
         await deleteFromCloudinary(uploadImage.public_id);
-      } catch (catchError) {
-        console.error(
-          `failed to deleate the orphan image from cloudinary:`,
-          catchError,
-        );
+      } catch (err) {
+        console.error("faild to delete orphan from cloudinary:0", err);
       }
     }
     throw error;

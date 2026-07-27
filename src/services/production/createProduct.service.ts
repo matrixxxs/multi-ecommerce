@@ -17,6 +17,7 @@ export interface Product {
   name: string;
   description: string;
   image_url: string;
+  image_public_id: string;
   in_stock: boolean;
   category: string;
   price: number;
@@ -43,12 +44,13 @@ export const createProduct = async (
   try {
     uploadedImage = await uploadImage(buffer);
     const image_url = uploadedImage.secure_url;
+    const image_public_id = uploadedImage.public_id;
 
     const insert = await pool.query<Product>(
       `
     INSERT INTO ecommerce.products 
-    (store_id,name, description, price, image_url, category, in_stock)
-    VALUES ($1,$2,$3,$4,$5,$6,$7)
+    (store_id,name, description, price, image_url,image_public_id, category, in_stock)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
     RETURNING id,name,description,price,image_url,category,in_stock,store_id
     `,
       [
@@ -57,6 +59,7 @@ export const createProduct = async (
         data.description,
         data.price,
         image_url,
+        image_public_id,
         data.category,
         data.in_stock,
       ],
