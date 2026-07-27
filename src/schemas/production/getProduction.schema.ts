@@ -1,5 +1,5 @@
 import path from "node:path";
-import z from "zod";
+import z, { number } from "zod";
 
 const product = z
   .object({
@@ -11,6 +11,8 @@ const product = z
       .optional(),
     minPrice: z.coerce.number().positive().optional(),
     maxPrice: z.coerce.number().positive().optional(),
+    limit: z.coerce.number().positive().optional(),
+    pages: z.coerce.number().positive().optional(),
   })
   .refine(
     (data) =>
