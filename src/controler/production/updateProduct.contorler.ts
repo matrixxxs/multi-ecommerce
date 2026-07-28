@@ -6,7 +6,7 @@ import {
   updateProduct,
 } from "../../services/production/update.services";
 import { ValidationError } from "../../error/error";
-const updateProductController = async (
+export const updateProductController = async (
   req: Request,
   res: Response,
   next: NextFunction,
@@ -14,7 +14,6 @@ const updateProductController = async (
   const data = update.parse(req.body);
   const { store_id } = req.admin as { store_id: string };
   const { id } = productId.parse(req.params);
-  //   const file = (req as any).file.buffer;
   const file = req.file?.buffer;
   const result = await updateProduct(data, store_id, id, file);
   res.status(200).json(result);

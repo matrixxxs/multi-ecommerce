@@ -9,7 +9,8 @@ import { product } from "../schemas/production/getProducts.schema";
 import { getProduct } from "../controler/production/getProducts.controler";
 import { productById } from "../controler/production/getProductById.controler";
 import { productId } from "../schemas/production/getProductsById.schema";
-
+import { update } from "../schemas/production/update.schema";
+import { updateProductController } from "../controler/production/updateProduct.contorler";
 const router = express.Router();
 
 router.post(
@@ -22,4 +23,12 @@ router.post(
 
 router.get("/p", authMiddleware, ValidateBody(product), getProduct);
 router.get("/:id", authMiddleware, ValidateParam(productId), productById);
+router.patch(
+  "/update/:id",
+  authMiddleware,
+  upload.single("image"),
+  ValidateParam(productId),
+  ValidateBody(update),
+  updateProductController,
+);
 export default router;
