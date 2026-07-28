@@ -16,7 +16,20 @@ export const getProductById = async (
   store_id: string,
 ): Promise<GetProductById> => {
   const get = await pool.query<GetProductById>(
-    "SELECT id,name,description,price,image_url,category,in_stock,store_id,created_at FROM ecommerce.products  WHERE id = $1 AND store_id = $2 ",
+    `SELECT id,name,description,price,image_url,category,in_stock,store_id,SELECT
+  id,
+  name,
+  description,
+  price,
+  image_url,
+  category,
+  in_stock,
+  store_id,
+  created_at
+FROM ecommerce.products
+WHERE id = $1
+  AND store_id = $2
+  AND is_deleted = false; FROM ecommerce.products  WHERE id = $1, AND store_id = $2 AND is_deleted = false `,
     [id, store_id],
   );
   const result = get.rows[0];

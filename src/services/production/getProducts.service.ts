@@ -41,7 +41,7 @@ export const getProducts = async (
 ): Promise<PaginatedProducts> => {
   // store_id always included and always first — tenant isolation is never optional
   let values: Array<string | number | boolean> = [store_id];
-  const conditions: Array<string> = ["store_id = $1"];
+  const conditions: Array<string> = ["store_id = $1", "is_deleted = false"];
 
   // Each filter appended only if provided, keeping params correctly indexed
   if (data.category) {
