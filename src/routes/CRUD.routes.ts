@@ -31,4 +31,5 @@ router.patch(
   ValidateBody(update),
   updateProductController,
 );
+router.delete("/delete", authMiddleware, ValidateParam(productId));
 export default router;
