@@ -11,7 +11,9 @@ export const updateProductController = async (
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
-  const data = update.parse(req.body);
+  console.log("in_stock raw value:", JSON.stringify(req.body.in_stock));
+  console.log("upcoming data:", req.body);
+  const data = req.body as UpdateProductData;
   const { store_id } = req.admin as { store_id: string };
   const { id } = productId.parse(req.params);
   const file = req.file?.buffer;

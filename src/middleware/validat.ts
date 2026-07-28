@@ -24,6 +24,6 @@ export const ValidateParam =
         JSON.stringify(result.error.flatten().fieldErrors),
       );
     }
-    req.body = result.data as any;
+    req.params = result.data as any;
     next();
   };

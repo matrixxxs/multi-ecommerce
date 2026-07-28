@@ -20,7 +20,7 @@ interface UpdatedProduct {
   description: string;
 }
 
-interface UpdateProductData {
+export interface UpdateProductData {
   name?: string;
   category?: string;
   in_stock?: boolean;
@@ -108,6 +108,7 @@ RETURNING
     }
     return result.rows[0];
   } catch (error) {
+    console.error("updateProduct failed:", error);
     if (uploadImage) {
       try {
         await deleteFromCloudinary(uploadImage.public_id);
