@@ -5,6 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["ecommerce", "public"]
 }
 
 model admin_users {
@@ -15,6 +16,8 @@ model admin_users {
   created_at            DateTime?               @default(now()) @db.Timestamptz(6)
   stores                stores                  @relation(fields: [store_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   password_reset_tokens password_reset_tokens[]
+
+  @@schema("ecommerce")
 }
 
 model orders {
@@ -31,6 +34,7 @@ model orders {
 
   @@index([store_id, status], map: "idx_orders_status")
   @@index([store_id], map: "idx_orders_store")
+  @@schema("ecommerce")
 }
 
 model password_reset_tokens {
@@ -41,6 +45,8 @@ model password_reset_tokens {
   used        Boolean?    @default(false)
   created_at  DateTime?   @default(now()) @db.Timestamptz(6)
   admin_users admin_users @relation(fields: [admin_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("ecommerce")
 }
 
 model products {
@@ -60,6 +66,7 @@ model products {
   stores          stores    @relation(fields: [store_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "product_store_id_fkey")
 
   @@index([store_id], map: "idx_product_store")
+  @@schema("ecommerce")
 }
 
 model stores {
@@ -72,4 +79,6 @@ model stores {
   admin_users  admin_users?
   orders       orders[]
   products     products[]
+
+  @@schema("ecommerce")
 }
