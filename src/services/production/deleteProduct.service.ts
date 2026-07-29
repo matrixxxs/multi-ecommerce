@@ -39,21 +39,23 @@ interface Product {
   created_at: Date;
 }
 
-const cleanupDeletedProducts = async (
-  store_id: string,
-  product_id: string,
-): Promise<void> => {
+export const cleanupDeletedProducts = async (): Promise<void> => {
   const get_deleted_product = await pool.query<Product>(
-    "SELECT * FROM ecommerce.products WHERE  is_deleted = true AND deleted_at < NOW() - INTERVAL '15 days'",
+    `SELECT * FROM ecommerce.products 
+     WHERE is_deleted = true 
+     AND deleted_at < NOW() - INTERVAL '15 days'`,
   );
+
   for (const product of get_deleted_product.rows) {
     try {
-      await deleteFromCloudinary(product.image_public_id);
-      await pool.query("DELETE FROM ecommerce.products WHERE id = $1 ", [
-        product_id,
+      if (product.image_public_id) {
+        await deleteFromCloudinary(product.image_public_id);
+      }
+      await pool.query("DELETE FROM ecommerce.products WHERE id = $1", [
+        product.id,
       ]);
     } catch (error) {
-      console.error(`Failed to clean up product ${product_id}:`, error);
+      console.error(`Failed to clean up product ${product.id}:`, error);
     }
   }
 };

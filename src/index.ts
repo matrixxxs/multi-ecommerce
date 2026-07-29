@@ -1,4 +1,5 @@
 import "dotenv/config";
+import "./utils/nodeCorn";
 import pool from "./config/db";
 import express from "express";
 import { errorHandler } from "./error/error";
