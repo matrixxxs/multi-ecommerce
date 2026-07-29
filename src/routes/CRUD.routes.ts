@@ -11,6 +11,7 @@ import { productById } from "../controler/production/getProductById.controler";
 import { productId } from "../schemas/production/getProductsById.schema";
 import { update } from "../schemas/production/update.schema";
 import { updateProductController } from "../controler/production/updateProduct.contorler";
+import { DeleteProduct } from "../controler/production/deleteProduct.controler";
 const router = express.Router();
 
 router.post(
@@ -31,5 +32,10 @@ router.patch(
   ValidateBody(update),
   updateProductController,
 );
-router.delete("/delete", authMiddleware, ValidateParam(productId));
+router.patch(
+  "/delete/:id",
+  authMiddleware,
+  ValidateParam(productId),
+  DeleteProduct,
+);
 export default router;

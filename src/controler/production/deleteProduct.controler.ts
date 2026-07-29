@@ -1,7 +1,7 @@
 import { deleteProduct } from "../../services/production/deleteProduct.service";
 import { Request, Response, NextFunction } from "express";
 import { productId } from "../../schemas/production/getProductsById.schema";
-const DeleteProduct = async (
+export const DeleteProduct = async (
   req: Request,
   res: Response,
   next: NextFunction,

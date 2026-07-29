@@ -8,8 +8,9 @@ export const deleteProduct = async (
   const result = await pool.query(
     `
     UPDATE ecommerce.products
-    SET is_deleted = true
-    WHERE id = $1 ,
+    SET is_deleted = true,
+     deleted_at = NOW()
+    WHERE id = $1 
     AND store_id = $2
     AND is_deleted = false
     `,
