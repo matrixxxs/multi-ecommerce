@@ -1,7 +1,7 @@
 import nodeCron from "node-cron";
 import { cleanupDeletedProducts } from "../services/production/deleteProduct.service";
 
-nodeCron.schedule("* 3 * * *", async () => {
+nodeCron.schedule("0 3 * * *", async () => {
   console.log("Running product cleanup job...");
   try {
     await cleanupDeletedProducts();
