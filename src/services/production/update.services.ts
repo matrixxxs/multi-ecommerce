@@ -1,5 +1,5 @@
-import pool from "../../config/db";
 import prisma from "../../config/prisma";
+import { Prisma } from "../../../generated/prisma/client";
 import { NotFound } from "../../error/error";
 import {
   uploadBufferToCloudinary,
@@ -48,17 +48,20 @@ export const updateProduct = async (
 ): Promise<UpdatedProduct> => {
   let uploadImage: UpdateImage | null = null;
   try {
-    const select = await pool.query<{
-      image_url: string;
-      image_public_id: string;
-    }>(
-      "SELECT image_url, image_public_id FROM ecommerce.products WHERE id = $1 AND store_id = $2",
-      [id, store_id],
-    );
-    if (select.rows.length === 0) {
+    const select = await prisma.products.findFirst({
+      where: {
+        id,
+        store_id,
+      },
+      select: {
+        image_public_id: true,
+        image_url: true,
+      },
+    });
+    if (!select) {
       throw new NotFound("Product not found");
     }
-    const oldImage = select.rows[0];
+    const oldImage = select;
     let image_url = oldImage.image_url;
     let public_id = oldImage.image_public_id;
     if (buffer) {
@@ -103,10 +106,17 @@ export const updateProduct = async (
   } catch (error) {
     console.error("updateProduct failed:", error);
     if (uploadImage) {
+      console.error(`updateProduct failed:`, error);
       try {
         await deleteFromCloudinary(uploadImage.public_id);
       } catch (err) {
         console.error("faild to delete orphan from cloudinary:0", err);
+      }
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        console.error("Product not found");
       }
     }
     throw error;

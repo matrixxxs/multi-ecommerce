@@ -1,26 +1,28 @@
 import { deleteFromCloudinary } from "../../utils/uploadToClodinary";
-import pool from "../../config/db";
+import prisma from "../../config/prisma";
+import { Prisma } from "../../../generated/prisma/client";
 import { NotFound } from "../../error/error";
-import { product } from "../../schemas/production/getProducts.schema";
 
 export const deleteProduct = async (
   store_id: string,
   id: string,
 ): Promise<void> => {
-  const result = await pool.query(
-    `
-    UPDATE ecommerce.products
-    SET is_deleted = true,
-     deleted_at = NOW()
-    WHERE id = $1 
-    AND store_id = $2
-    AND is_deleted = false
-    `,
-    [id, store_id],
-  );
-
-  if (result.rowCount === 0) {
-    throw new NotFound("Product not found");
+  try {
+    await prisma.products.update({
+      where: { id, store_id, is_deleted: false },
+      data: {
+        is_deleted: true,
+        deleted_at: new Date(),
+      },
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      throw new NotFound("Product not found");
+    }
+    throw error;
   }
 };
 
@@ -40,20 +42,38 @@ interface Product {
 }
 
 export const cleanupDeletedProducts = async (): Promise<void> => {
-  const get_deleted_product = await pool.query<Product>(
-    `SELECT * FROM ecommerce.products 
-     WHERE is_deleted = true 
-     AND deleted_at < NOW() - INTERVAL '15 days'`,
-  );
+  const fifteenDaysAgo = new Date();
+  fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
 
-  for (const product of get_deleted_product.rows) {
+  const get_deleted_products = await prisma.products.findMany({
+    where: {
+      is_deleted: true,
+      deleted_at: { lte: fifteenDaysAgo },
+    },
+    select: {
+      id: true,
+      name: true,
+      category: true,
+      description: true,
+      price: true,
+      image_public_id: true,
+      image_url: true,
+      in_stock: true,
+      deleted_at: true,
+      created_at: true,
+      is_deleted: true,
+      store_id: true,
+    },
+  });
+
+  for (const product of get_deleted_products) {
     try {
       if (product.image_public_id) {
         await deleteFromCloudinary(product.image_public_id);
       }
-      await pool.query("DELETE FROM ecommerce.products WHERE id = $1", [
-        product.id,
-      ]);
+      await prisma.products.delete({
+        where: { id: product.id },
+      });
     } catch (error) {
       console.error(`Failed to clean up product ${product.id}:`, error);
     }
