@@ -1,3 +1,5 @@
+import prisma from "../config/prisma";
+import { Prisma } from "../../generated/prisma/client";
 import pool from "../config/db";
 import { NotAllowed, FakeStatus } from "../error/error";
 import crypto from "crypto";
@@ -24,35 +26,31 @@ interface VerifyToken {
 
 // Generate + store a password reset token for a given email
 export const createResetToken = async (email: string): Promise<string> => {
-  const search = await pool.query<UserReset>(
-    "SELECT id,email FROM ecommerce.admin_users WHERE email = $1",
-    [email],
-  );
-  const lookup = search.rows[0];
+  const lookup = await prisma.admin_users.findFirst({
+    where: { email },
+    select: {
+      id: true,
+      email: true,
+    },
+  });
   if (!lookup) {
     throw new FakeStatus("A reset link as been sent");
   }
   const token = crypto.randomBytes(32).toString("hex");
   const hash_token = crypto.createHash("sha256").update(token).digest("hex");
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    await client.query(
-      "UPDATE ecommerce.password_reset_tokens SET used = true WHERE admin_id = $1",
-      [lookup.id],
-    );
-
-    await client.query<InsertToken>(
-      "INSERT INTO ecommerce.password_reset_tokens (admin_id,token,used) VALUES ($1,$2,$3)",
-      [lookup.id, hash_token, false],
-    );
-    await client.query("COMMIT");
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
-  }
+  await prisma.$transaction([
+    prisma.password_reset_tokens.updateMany({
+      where: { admin_id: lookup.id },
+      data: { used: true },
+    }),
+    prisma.password_reset_tokens.create({
+      data: {
+        admin_id: lookup.id,
+        used: false,
+        token: hash_token,
+      },
+    }),
+  ]);
 
   return token;
 };
@@ -62,11 +60,16 @@ export const verifyResetToken = async (
   token: string,
 ): Promise<{ id: string; admin_id: string }> => {
   const hash_token = crypto.createHash("sha256").update(token).digest("hex");
-  const result = await pool.query<VerifyToken>(
-    "SELECT id,admin_id,used, expires_at FROM ecommerce.password_reset_tokens WHERE token = $1 ",
-    [hash_token],
-  );
-  const row = result.rows[0];
+
+  const row = await prisma.password_reset_tokens.findUnique({
+    where: { token: hash_token },
+    select: {
+      id: true,
+      admin_id: true,
+      used: true,
+      expires_at: true,
+    },
+  });
   if (!row) {
     throw new NotAllowed("Invalid or expired token");
   }
@@ -86,23 +89,17 @@ export const verifyResetToken = async (
 export const resetPassword = async (token: string, newPassword: string) => {
   const user = await verifyResetToken(token);
   const hash_newPassword = await bcrypt.hash(newPassword, SALTROUND);
-  const client = await pool.connect();
 
-  try {
-    await client.query("BEGIN");
-    await client.query(
-      "UPDATE ecommerce.admin_users SET password = $1 WHERE id = $2",
-      [hash_newPassword, user.admin_id],
-    );
-    await client.query(
-      "UPDATE ecommerce.password_reset_tokens SET used = TRUE WHERE id = $1",
-      [user.id],
-    );
-    await client.query("COMMIT");
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
-  }
+  await prisma.$transaction([
+    prisma.admin_users.update({
+      where: { id: user.admin_id },
+      data: {
+        password: hash_newPassword,
+      },
+    }),
+    prisma.password_reset_tokens.update({
+      where: { id: user.id },
+      data: { used: true },
+    }),
+  ]);
 };

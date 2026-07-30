@@ -1,4 +1,5 @@
 import pool from "../../config/db";
+import prisma from "../../config/prisma";
 import {
   uploadBufferToCloudinary,
   deleteFromCloudinary,
@@ -65,7 +66,17 @@ export const createProduct = async (
       ],
     );
 
-    const product = insert.rows[0];
+    // const product = prisma.products.create({
+    //   data:{
+    //     name: data.name,
+    //     category:data.category,
+    //     description: data.description,
+    //     price:data.price,
+    //     in_stock:data.in_stock
+
+    //   },
+    //   se
+    // })
 
     if (!product) {
       throw new Error("Failed to create product");
