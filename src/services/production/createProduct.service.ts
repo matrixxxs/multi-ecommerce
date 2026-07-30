@@ -18,7 +18,7 @@ export interface Product {
   name: string;
   description: string;
   image_url: string;
-  image_public_id: string;
+  image_public_id: string | null;
   in_stock: boolean;
   category: string;
   price: number;
@@ -47,42 +47,35 @@ export const createProduct = async (
     const image_url = uploadedImage.secure_url;
     const image_public_id = uploadedImage.public_id;
 
-    const insert = await pool.query<Product>(
-      `
-    INSERT INTO ecommerce.products 
-    (store_id,name, description, price, image_url,image_public_id, category, in_stock)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-    RETURNING id,name,description,price,image_url,category,in_stock,store_id
-    `,
-      [
+    const product = await prisma.products.create({
+      data: {
         store_id,
-        data.name,
-        data.description,
-        data.price,
-        image_url,
-        image_public_id,
-        data.category,
-        data.in_stock,
-      ],
-    );
-
-    // const product = prisma.products.create({
-    //   data:{
-    //     name: data.name,
-    //     category:data.category,
-    //     description: data.description,
-    //     price:data.price,
-    //     in_stock:data.in_stock
-
-    //   },
-    //   se
-    // })
+        name: data.name,
+        category: data.category,
+        description: data.description,
+        image_url: image_url,
+        image_public_id: image_public_id,
+        price: data.price,
+        in_stock: data.in_stock,
+      },
+      select: {
+        store_id: true,
+        id: true,
+        name: true,
+        category: true,
+        price: true,
+        description: true,
+        in_stock: true,
+        image_url: true,
+        image_public_id: true,
+      },
+    });
 
     if (!product) {
       throw new Error("Failed to create product");
     }
 
-    return product;
+    return { ...product, price: product.price.toNumber() };
   } catch (error) {
     if (uploadedImage) {
       try {
