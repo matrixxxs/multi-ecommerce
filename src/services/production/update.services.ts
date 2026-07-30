@@ -1,4 +1,5 @@
 import pool from "../../config/db";
+import prisma from "../../config/prisma";
 import { NotFound } from "../../error/error";
 import {
   uploadBufferToCloudinary,
@@ -15,7 +16,7 @@ interface UpdatedProduct {
   category: string;
   in_stock: boolean;
   image_url: string;
-  image_public_id: string;
+  image_public_id: string | null;
   price: number;
   description: string;
 }
@@ -65,48 +66,40 @@ export const updateProduct = async (
       image_url = uploadImage.secure_url;
       public_id = uploadImage.public_id;
     }
-    const query = `
-UPDATE ecommerce.products
-SET 
-     name = COALESCE($1, name),
-    category = COALESCE($2, category),
-    in_stock = COALESCE($3, in_stock),
-    image_url = $4,
-    image_public_id = $5,
-    price = COALESCE($6, price),
-    description = COALESCE($7, description)
-WHERE id = $8
-AND store_id = $9
-RETURNING
-    id,
-    name,
-    category,
-    in_stock,
-    image_url,
-    image_public_id,
-    description,
-    price;
-`;
-    const value: Array<string | boolean | number | undefined> = [
-      data.name,
-      data.category,
-      data.in_stock,
-      image_url,
-      public_id,
-      data.price,
-      data.description,
-      id,
-      store_id,
-    ];
 
-    const result = await pool.query<UpdatedProduct>(query, value);
-    if (result.rows.length === 0) {
+    const result = await prisma.products.update({
+      where: {
+        id,
+        store_id,
+      },
+      data: {
+        name: data.name,
+        category: data.category,
+        description: data.description,
+        price: data.price,
+        in_stock: data.in_stock,
+        image_url: image_url,
+        image_public_id: public_id,
+      },
+      select: {
+        id: true,
+        store_id: true,
+        name: true,
+        description: true,
+        image_url: true,
+        in_stock: true,
+        category: true,
+        price: true,
+        image_public_id: true,
+      },
+    });
+    if (!result) {
       throw new NotFound("Product not found");
     }
     if (buffer && oldImage.image_public_id) {
       await deleteFromCloudinary(oldImage.image_public_id);
     }
-    return result.rows[0];
+    return { ...result, price: result.price.toNumber() };
   } catch (error) {
     console.error("updateProduct failed:", error);
     if (uploadImage) {
