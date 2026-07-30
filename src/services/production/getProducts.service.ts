@@ -1,4 +1,5 @@
-import pool from "../../config/db";
+import prisma from "../../config/prisma";
+import { Prisma } from "../../../generated/prisma/client";
 
 // Input shape after schema validation + store_id from JWT
 export interface ProductTokens {
@@ -21,7 +22,7 @@ interface Product {
   in_stock: boolean;
   category: string;
   price: number;
-  created_at: string;
+  created_at: Date | null;
 }
 
 // Final response shape returned to the client
@@ -39,51 +40,54 @@ export const getProducts = async (
   data: ProductTokens,
   store_id: string,
 ): Promise<PaginatedProducts> => {
-  // store_id always included and always first — tenant isolation is never optional
-  let values: Array<string | number | boolean> = [store_id];
-  const conditions: Array<string> = ["store_id = $1", "is_deleted = false"];
-
-  // Each filter appended only if provided, keeping params correctly indexed
-  if (data.category) {
-    values.push(data.category);
-    conditions.push(`category = $${values.length}`);
-  }
+  const where: Prisma.productsWhereInput = {
+    store_id,
+    is_deleted: false,
+  };
   if (data.name) {
-    values.push(`%${data.name}%`);
-    conditions.push(`name ILIKE $${values.length}`);
+    where.name = {
+      contains: data.name,
+      mode: "insensitive",
+    };
+  }
+  if (data.category) {
+    where.category = data.category;
   }
   if (data.in_stock !== undefined) {
-    values.push(data.in_stock);
-    conditions.push(`in_stock = $${values.length}`);
+    where.in_stock = data.in_stock;
   }
-  if (data.minPrice !== undefined) {
-    values.push(data.minPrice);
-    conditions.push(`price >= $${values.length}`);
+  if (data.minPrice !== undefined || data.maxPrice !== undefined) {
+    where.price = {};
+    if (data.minPrice !== undefined) where.price.gte = data.minPrice;
+    if (data.maxPrice !== undefined) where.price.lte = data.maxPrice;
   }
-  if (data.maxPrice !== undefined) {
-    values.push(data.maxPrice);
-    conditions.push(`price <= $${values.length}`);
-  }
-
-  // Combine all active filters into one WHERE clause
-  const whereCase = conditions.join(" AND ");
   const offset = (data.page - 1) * data.limit;
 
-  // Main query — newest first, paginated, plus total row count via window function
-  const query = `SELECT id,name,description,price,image_url,category,in_stock,store_id,created_at, COUNT(*) OVER() AS total_count FROM ecommerce.products WHERE ${whereCase} ORDER BY created_at DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
-  values.push(data.limit, offset);
+  const [rows, total] = await Promise.all([
+    prisma.products.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        category: true,
+        description: true,
+        price: true,
+        in_stock: true,
+        image_url: true,
+        store_id: true,
+        created_at: true,
+      },
+      orderBy: { created_at: "desc" },
+      take: data.limit,
+      skip: offset,
+    }),
+    prisma.products.count({ where }),
+  ]);
 
-  const result = await pool.query<Product & { total_count: string }>(
-    query,
-    values,
-  );
-
-  // Total count comes back on every row identically — read once, guard against empty results
-  const total =
-    result.rows.length > 0 ? parseInt(result.rows[0].total_count, 10) : 0;
-
-  // Strip the internal total_count field before returning products to the client
-  const finalResult = result.rows.map(({ total_count, ...product }) => product);
+  const finalResult = rows.map((product) => ({
+    ...product,
+    price: product.price.toNumber(),
+  }));
 
   return {
     data: finalResult,
