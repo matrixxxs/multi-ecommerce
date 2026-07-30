@@ -1,4 +1,4 @@
-import pool from "../../config/db";
+import prisma from "../../config/prisma";
 import { NotFound } from "../../error/error";
 export interface GetProductById {
   id: string;
@@ -9,30 +9,34 @@ export interface GetProductById {
   in_stock: boolean;
   category: string;
   price: number;
-  created_at: string;
+  created_at: Date | null;
 }
 export const getProductById = async (
   id: string,
   store_id: string,
 ): Promise<GetProductById> => {
-  const get = await pool.query<GetProductById>(
-    `SELECT
-  id,
-  name,
-  description,
-  price,
-  image_url,
-  category,
-  in_stock,
-  store_id,
-  created_at
-FROM ecommerce.products
-WHERE id = $1
-  AND store_id = $2
-  AND is_deleted = false; `,
-    [id, store_id],
-  );
-  const result = get.rows[0];
+  const result = await prisma.products.findFirst({
+    where: {
+      id,
+      store_id,
+      is_deleted: false,
+    },
+    select: {
+      id: true,
+      name: true,
+      category: true,
+      description: true,
+      price: true,
+      in_stock: true,
+      image_url: true,
+      store_id: true,
+      created_at: true,
+    },
+  });
+
   if (!result) throw new NotFound("Product not found");
-  return result;
+  return {
+    ...result,
+    price: result.price.toNumber(),
+  };
 };
