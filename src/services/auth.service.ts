@@ -1,3 +1,5 @@
+import prisma from "../config/prisma";
+import { Prisma } from "../../generated/prisma/client";
 import bcrypt from "bcrypt";
 import pool from "../config/db";
 import crypto from "crypto";
@@ -29,18 +31,28 @@ interface UsersWithPassword extends Users {
 export const createUser = async (data: CreateUsers): Promise<Users> => {
   try {
     const password_hashed = await bcrypt.hash(data.password, SALTROUND);
-    const result = await pool.query<Users>(
-      "INSERT INTO ecommerce.admin_users (email,password,store_id) VALUES ($1,$2,$3) RETURNING id,email,store_id",
-      [data.email, password_hashed, data.store_id],
-    );
-    const user = result.rows[0];
-    if (!user) {
-      throw new Error("Failed to create user");
-    }
+
+    const user = await prisma.admin_users.create({
+      data: {
+        email: data.email,
+        password: password_hashed,
+        store_id: data.store_id,
+      },
+      select: {
+        id: true,
+        email: true,
+        store_id: true,
+      },
+    });
     return user;
   } catch (err: any) {
-    if (err.code === "23505") {
-      throw new ConflictError("email already exist");
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === "P2002") {
+        throw new ConflictError("email already exist");
+      }
+      if (err.code === "P2003") {
+        throw new ConflictError("store_id does not  exist");
+      }
     }
     throw err;
   }
@@ -51,11 +63,15 @@ export const verifyCreditals = async (
   email: string,
   password: string,
 ): Promise<Users> => {
-  const select = await pool.query<UsersWithPassword>(
-    "SELECT id,store_id,email,password FROM ecommerce.admin_users WHERE email = $1",
-    [email],
-  );
-  const user = select.rows[0];
+  const user = await prisma.admin_users.findFirst({
+    where: { email },
+    select: {
+      id: true,
+      email: true,
+      store_id: true,
+      password: true,
+    },
+  });
   if (!user) {
     throw new UnauthorizedError("Incorrect email or password");
   }
