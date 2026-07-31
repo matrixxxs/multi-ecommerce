@@ -1,8 +1,15 @@
 import z from "zod";
 
 export const order = z.object({
-  name: z.string().min(3),
-  phone_number: z.coerce.number(),
-  adress: z.string(),
-  qty: z.coerce.number().int().min(0),
+  customer_name: z.string().min(3),
+  customer_phone: z.string().min(10).max(15),
+  customer_address: z.string().max(255),
+  items: z
+    .array(
+      z.object({
+        product_id: z.string().uuid().min(1),
+        qty: z.number().int().min(1),
+      }),
+    )
+    .min(1),
 });
