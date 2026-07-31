@@ -63,6 +63,7 @@ export const cleanupDeletedProducts = async (): Promise<void> => {
       created_at: true,
       is_deleted: true,
       store_id: true,
+      qty: true,
     },
   });
 

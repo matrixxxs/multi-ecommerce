@@ -23,6 +23,7 @@ interface Product {
   category: string;
   price: number;
   created_at: Date | null;
+  qty: number | null;
 }
 
 // Final response shape returned to the client
@@ -76,6 +77,7 @@ export const getProducts = async (
         image_url: true,
         store_id: true,
         created_at: true,
+        qty: true,
       },
       orderBy: { created_at: "desc" },
       take: data.limit,

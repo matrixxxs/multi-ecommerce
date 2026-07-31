@@ -19,6 +19,7 @@ interface UpdatedProduct {
   image_public_id: string | null;
   price: number;
   description: string;
+  qty: number;
 }
 
 export interface UpdateProductData {
@@ -27,6 +28,7 @@ export interface UpdateProductData {
   in_stock?: boolean;
   price?: number;
   description?: string;
+  qty?: number;
 }
 
 const UploadImage = async (buffer: Buffer): Promise<UpdateImage> => {
@@ -39,7 +41,6 @@ const UploadImage = async (buffer: Buffer): Promise<UpdateImage> => {
     public_id: result.public_id,
   };
 };
-
 export const updateProduct = async (
   data: UpdateProductData,
   store_id: string,
@@ -48,22 +49,20 @@ export const updateProduct = async (
 ): Promise<UpdatedProduct> => {
   let uploadImage: UpdateImage | null = null;
   try {
-    const select = await prisma.products.findFirst({
-      where: {
-        id,
-        store_id,
-      },
+    const oldImage = await prisma.products.findFirst({
+      where: { id, store_id },
       select: {
         image_public_id: true,
         image_url: true,
       },
     });
-    if (!select) {
+    if (!oldImage) {
       throw new NotFound("Product not found");
     }
-    const oldImage = select;
+
     let image_url = oldImage.image_url;
     let public_id = oldImage.image_public_id;
+
     if (buffer) {
       uploadImage = await UploadImage(buffer);
       image_url = uploadImage.secure_url;
@@ -71,18 +70,16 @@ export const updateProduct = async (
     }
 
     const result = await prisma.products.update({
-      where: {
-        id,
-        store_id,
-      },
+      where: { id, store_id },
       data: {
         name: data.name,
         category: data.category,
         description: data.description,
         price: data.price,
         in_stock: data.in_stock,
-        image_url: image_url,
+        image_url,
         image_public_id: public_id,
+        qty: data.qty,
       },
       select: {
         id: true,
@@ -94,31 +91,33 @@ export const updateProduct = async (
         category: true,
         price: true,
         image_public_id: true,
+        qty: true,
       },
     });
-    if (!result) {
-      throw new NotFound("Product not found");
-    }
+
     if (buffer && oldImage.image_public_id) {
       await deleteFromCloudinary(oldImage.image_public_id);
     }
-    return { ...result, price: result.price.toNumber() };
+
+    return { ...result, price: result.price.toNumber(), qty: result.qty ?? 0 };
   } catch (error) {
     console.error("updateProduct failed:", error);
+
     if (uploadImage) {
-      console.error(`updateProduct failed:`, error);
       try {
         await deleteFromCloudinary(uploadImage.public_id);
       } catch (err) {
-        console.error("faild to delete orphan from cloudinary:0", err);
-      }
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2025"
-      ) {
-        console.error("Product not found");
+        console.error("failed to delete orphan from cloudinary:", err);
       }
     }
+
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      throw new NotFound("Product not found");
+    }
+
     throw error;
   }
 };

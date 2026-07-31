@@ -10,6 +10,7 @@ export interface CreateProduct {
   in_stock: boolean;
   category: string;
   price: number;
+  qty: number;
 }
 
 export interface Product {
@@ -22,6 +23,7 @@ export interface Product {
   in_stock: boolean;
   category: string;
   price: number;
+  qty: number;
 }
 interface UploadedImage {
   secure_url: string;
@@ -57,6 +59,7 @@ export const createProduct = async (
         image_public_id: image_public_id,
         price: data.price,
         in_stock: data.in_stock,
+        qty: data.qty,
       },
       select: {
         store_id: true,
@@ -68,6 +71,7 @@ export const createProduct = async (
         in_stock: true,
         image_url: true,
         image_public_id: true,
+        qty: true,
       },
     });
 
@@ -75,7 +79,11 @@ export const createProduct = async (
       throw new Error("Failed to create product");
     }
 
-    return { ...product, price: product.price.toNumber() };
+    return {
+      ...product,
+      price: product.price.toNumber(),
+      qty: product.qty ?? 0,
+    };
   } catch (error) {
     if (uploadedImage) {
       try {

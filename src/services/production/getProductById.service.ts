@@ -10,6 +10,7 @@ export interface GetProductById {
   category: string;
   price: number;
   created_at: Date | null;
+  qty: number | null;
 }
 export const getProductById = async (
   id: string,
@@ -31,6 +32,7 @@ export const getProductById = async (
       image_url: true,
       store_id: true,
       created_at: true,
+      qty: true,
     },
   });
 

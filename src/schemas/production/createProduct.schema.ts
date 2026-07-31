@@ -6,4 +6,5 @@ export const createProduct = z.object({
   in_stock: z.enum(["true", "false"]).transform((val) => val === "true"),
   category: z.string(),
   price: z.coerce.number().positive(),
+  qty: z.coerce.number().int().min(0),
 });
