@@ -8,7 +8,7 @@ export const order = z.object({
     .array(
       z.object({
         product_id: z.string().uuid().min(1),
-        qty: z.number().int().min(1),
+        quantity: z.number().int().min(1),
       }),
     )
     .min(1),
