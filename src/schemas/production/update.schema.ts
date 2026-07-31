@@ -9,4 +9,5 @@ export const update = z.object({
     .transform((val) => val === "true")
     .optional(),
   price: z.coerce.number().optional(),
+  qty: z.coerce.number().int().optional(),
 });
