@@ -1,5 +1,6 @@
 import prisma from "../../config/prisma";
 import { Prisma } from "../../../generated/prisma/browser";
+import { NotFound } from "../../error/error";
 export interface ProductToken {
   name?: string;
   category?: string;
@@ -27,10 +28,26 @@ export interface Product {
   };
 }
 
+const getStoreId = async (slug: string): Promise<string> => {
+  const get = await prisma.stores.findFirst({
+    where: {
+      slug,
+    },
+    select: {
+      id: true,
+    },
+  });
+  if (!get) {
+    throw new NotFound("store can not be found");
+  }
+
+  return get.id;
+};
 export const display = async (
   date: ProductToken,
-  store_id: string,
+  slug: string,
 ): Promise<Product> => {
+  const store_id = await getStoreId(slug);
   const where: Prisma.productsWhereInput = {
     store_id,
     is_deleted: false,
