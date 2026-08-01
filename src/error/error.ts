@@ -37,6 +37,12 @@ export class NotFound extends AppError {
   }
 }
 
+export class OutOfStock extends AppError {
+  constructor(message: string) {
+    super(message, 404);
+  }
+}
+
 export class FakeStatus extends AppError {
   constructor(message: string) {
     super(message, 200);
