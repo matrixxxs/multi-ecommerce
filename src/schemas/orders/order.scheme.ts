@@ -1,6 +1,6 @@
 import z from "zod";
 
-export const order = z.object({
+export const order_schema = z.object({
   customer_name: z.string().min(3),
   customer_phone: z.string().min(10).max(15),
   customer_address: z.string().max(255),
