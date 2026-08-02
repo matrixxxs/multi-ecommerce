@@ -14,7 +14,7 @@ interface GetIdResult {
   created_at: Date | null;
 }
 
-export const getOrdersById = async (
+export const getOrderByIdService = async (
   id: string,
   store_id: string,
 ): Promise<GetIdResult> => {
