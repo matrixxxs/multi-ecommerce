@@ -9,8 +9,9 @@ export const productById = async (
 ): Promise<void> => {
   try {
     const { id } = productId.parse(req.params);
-    const { store_id } = req.admin as { store_id: string };
-    const result = await getProductByIdService(id, store_id);
+    const { slug } = req.params as { slug: string };
+
+    const result = await getProductByIdService(id, slug);
     res.status(200).json(result);
   } catch (error) {
     return next(error);

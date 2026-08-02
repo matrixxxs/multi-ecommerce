@@ -1,5 +1,6 @@
 import prisma from "../../config/prisma";
 import { NotFound } from "../../error/error";
+import { getStoreId } from "../../config/getStoreId";
 
 export interface GetId {
   id: string;
@@ -17,8 +18,12 @@ interface GetIdResult {
 
 export const getProductByIdService = async (
   id: string,
-  store_id: string,
+  slug: string,
 ): Promise<GetIdResult> => {
+  const store_id = await getStoreId(slug);
+  if (!store_id) {
+    throw new NotFound("Store not found");
+  }
   const result = await prisma.products.findFirst({
     where: {
       id,
