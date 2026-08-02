@@ -16,7 +16,7 @@ export interface TokenPayLoad {
 
 // Sign a new JWT for a logged-in admin
 export const signinToken = (payload: TokenPayLoad) => {
-  return jwt.sign(payload, getSecret(), { expiresIn: "2d" });
+  return jwt.sign(payload, getSecret(), { expiresIn: "7d" });
 };
 
 // Verify + decode a JWT
