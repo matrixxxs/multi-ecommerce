@@ -1,4 +1,4 @@
-import { productId } from "../../schemas/production/getProductsById.schema";
+import { productByIdParams } from "../../schemas/product/displayProductById.schema";
 import { Request, Response, NextFunction } from "express";
 import { getProductByIdService } from "../../services/product/displayProductById.services";
 
@@ -8,8 +8,7 @@ export const productById = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const { id } = productId.parse(req.params);
-    const { slug } = req.params as { slug: string };
+    const { id, slug } = productByIdParams.parse(req.params);
 
     const result = await getProductByIdService(id, slug);
     res.status(200).json(result);
