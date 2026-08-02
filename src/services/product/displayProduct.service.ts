@@ -1,5 +1,6 @@
 import prisma from "../../config/prisma";
 import { Prisma } from "../../../generated/prisma/browser";
+import { getStoreId } from "../../config/getStoreId";
 import { NotFound } from "../../error/error";
 export interface ProductToken {
   name?: string;
@@ -28,21 +29,6 @@ export interface Product {
   };
 }
 
-const getStoreId = async (slug: string): Promise<string> => {
-  const get = await prisma.stores.findFirst({
-    where: {
-      slug,
-    },
-    select: {
-      id: true,
-    },
-  });
-  if (!get) {
-    throw new NotFound("store can not be found");
-  }
-
-  return get.id;
-};
 export const display = async (
   date: ProductToken,
   slug: string,
@@ -58,7 +44,7 @@ export const display = async (
       mode: "insensitive",
     };
   }
-  if (date.category !== "All") {
+  if (date.category !== undefined) {
     where.category = date.category;
   }
   const offset = (date.page - 1) * date.limit;
