@@ -7,14 +7,15 @@ export interface GetId {
 
 interface GetIdResult {
   id: string;
-  customer_name: string;
-  customer_phone: string;
-  status: string;
   store_id: string;
-  created_at: Date | null;
+  name: string;
+  description: string;
+  image_url: string;
+  category: string;
+  price: number;
 }
 
-export const getOrderByIdService = async (
+export const getProductByIdService = async (
   id: string,
   store_id: string,
 ): Promise<GetIdResult> => {
@@ -25,11 +26,12 @@ export const getOrderByIdService = async (
     },
     select: {
       id: true,
-      customer_name: true,
-      customer_phone: true,
-      status: true,
       store_id: true,
-      created_at: true,
+      name: true,
+      description: true,
+      image_url: true,
+      category: true,
+      price: true,
     },
   });
 
@@ -37,5 +39,5 @@ export const getOrderByIdService = async (
     throw new NotFound("Product not found");
   }
 
-  return result;
+  return { ...result, price: result.price.toNumber() };
 };
