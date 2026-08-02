@@ -1,9 +1,8 @@
-import { id } from "zod/v4/locales";
 import prisma from "../../config/prisma";
+import { getStoreId } from "../../config/getStoreId";
 import { NotFound, OutOfStock } from "../../error/error";
 import { order_schema } from "../../schemas/orders/order.scheme";
 import z from "zod";
-import { product } from "../../schemas/production/getProducts.schema";
 type OrdersData = z.infer<typeof order_schema>;
 interface OrdersDetails {
   id: string;
@@ -18,29 +17,13 @@ interface OrdersDetails {
   }[];
 }
 
-const getStoreId = async (slug: string): Promise<string> => {
-  const get = await prisma.stores.findFirst({
-    where: {
-      slug,
-    },
-    select: {
-      id: true,
-    },
-  });
-  if (!get) {
-    throw new NotFound("store can not be found");
-  }
-
-  return get.id;
-};
-
 export const createOrder = async (
   data: OrdersData,
   slug: string,
 ): Promise<OrdersDetails> => {
   const store_id = await getStoreId(slug);
 
-  const product = await prisma.products.findMany({
+  const foundProducts = await prisma.products.findMany({
     where: {
       store_id,
       is_deleted: false,
@@ -50,7 +33,7 @@ export const createOrder = async (
     },
   });
   const orderItems = data.items.map((currentItem) => {
-    const productItems = product.find(
+    const productItems = foundProducts.find(
       (product) => product.id === currentItem.product_id,
     );
     if (!productItems) {
