@@ -17,6 +17,7 @@ export interface DisplayProduct {
   image_url: string;
   category: string;
   price: number;
+  in_stock: Boolean;
 }
 
 export interface Product {
@@ -60,6 +61,7 @@ export const display = async (
         price: true,
         description: true,
         image_url: true,
+        in_stock: true,
       },
       orderBy: { created_at: "desc" },
       take: date.limit,

@@ -14,6 +14,7 @@ interface GetIdResult {
   image_url: string;
   category: string;
   price: number;
+  in_stock: boolean;
 }
 
 export const getProductByIdService = async (
@@ -37,6 +38,7 @@ export const getProductByIdService = async (
       image_url: true,
       category: true,
       price: true,
+      in_stock: true,
     },
   });
 
