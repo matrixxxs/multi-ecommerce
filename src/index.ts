@@ -1,5 +1,7 @@
 import "dotenv/config";
 import "./utils/nodeCorn";
+import morgan from "morgan";
+import helmet from "helmet";
 import pool from "./config/db";
 import express from "express";
 import { errorHandler } from "./error/error";
@@ -10,7 +12,8 @@ import orderRouter from "./routes/order.router";
 import productRouter from "./routes/product.router";
 
 const app = express();
-
+app.use(helmet());
+app.use(morgan("dev"));
 app.use(express.json());
 
 app.use("/auth", authRoutes);
@@ -19,7 +22,6 @@ app.use("/products", crudRoutes);
 app.use("/store", orderRouter);
 app.use("/store", productRouter);
 
-console.log(process.env.DB_PASSWORD);
 app.use(errorHandler);
 app.listen(3000, () => {
   console.log("server is running on port 3000");
