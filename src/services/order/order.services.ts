@@ -64,22 +64,7 @@ export const createOrder = async (
         order_id: result.id,
       })),
     });
-    for (const item of orderItems) {
-      const updateResult = await tx.products.updateMany({
-        where: {
-          id: item.product_id,
-          qty: { gte: item.quantity },
-        },
-        data: {
-          qty: {
-            decrement: item.quantity,
-          },
-        },
-      });
-      if (updateResult.count === 0) {
-        throw new OutOfStock("out of stock");
-      }
-    }
+
     return result;
   });
   return {
