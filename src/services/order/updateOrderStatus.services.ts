@@ -1,5 +1,5 @@
 import prisma from "../../config/prisma";
-import { NotFound, OutOfStock } from "../../error/error";
+import { NotAllowed, NotFound, OutOfStock } from "../../error/error";
 
 interface UpdatedOrder {
   id: string;
@@ -49,7 +49,9 @@ export const updateOrderStatus = async (
 
     // Check if status transition is allowed
     if (!allowedTransitions[currentStatus].includes(status)) {
-      throw new Error(`Cannot change order from ${currentStatus} to ${status}`);
+      throw new NotAllowed(
+        `Cannot change order from ${currentStatus} to ${status}`,
+      );
     }
 
     // When confirming order, remove items from stock
@@ -83,7 +85,7 @@ export const updateOrderStatus = async (
     if (currentStatus === "confirmed" && status === "cancelled") {
       for (const item of findOrder.order_items) {
         if (!item.product_id) {
-          throw new NotFound("Product not found");
+          continue;
         }
 
         await tx.products.update({
