@@ -9,7 +9,7 @@ export const create = async (req: Request, res: Response): Promise<void> => {
   const { store_id } = req.admin as { store_id: string };
   const productData: CreateProduct = req.body;
   const files = req.files as Express.Multer.File[];
-  if (!files || files.length === 0) {
+  if (!files || files.length > 3) {
     throw new ValidationError("At least one image is required");
   }
   const result = await createProduct(productData, files, store_id);

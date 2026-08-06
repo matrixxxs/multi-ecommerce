@@ -57,60 +57,58 @@ export const createProduct = async (
   store_id: string,
 ): Promise<Product> => {
   let uploadedImages: UploadedImage[] | null = null;
+  uploadedImages = await uploadImage(files);
 
   try {
-    uploadedImages = await uploadImage(files);
+    const result = await prisma.$transaction(async (tx) => {
+      const product = await tx.products.create({
+        data: {
+          store_id,
+          name: data.name,
+          category: data.category,
+          description: data.description,
+          price: data.price,
+          in_stock: data.in_stock,
+          qty: data.qty,
+        },
+        select: {
+          store_id: true,
+          id: true,
+          name: true,
+          category: true,
+          price: true,
+          description: true,
+          in_stock: true,
+          qty: true,
+        },
+      });
 
-    const [mainImage] = uploadedImages;
-
-    const product = await prisma.products.create({
-      data: {
-        store_id,
-        name: data.name,
-        category: data.category,
-        description: data.description,
-        price: data.price,
-        in_stock: data.in_stock,
-        qty: data.qty,
-      },
-      select: {
-        store_id: true,
-        id: true,
-        name: true,
-        category: true,
-        price: true,
-        description: true,
-        in_stock: true,
-        qty: true,
-      },
+      const productImage = await Promise.all(
+        uploadedImages.map((images, index) =>
+          tx.product_images.create({
+            data: {
+              product_id: product.id,
+              image_url: images.secure_url,
+              image_public_id: images.public_id,
+              is_main: index === 0,
+            },
+            select: {
+              id: true,
+              image_url: true,
+              image_public_id: true,
+              is_main: true,
+            },
+          }),
+        ),
+      );
+      return { product, productImage };
     });
-    const productImage = await Promise.all(
-      uploadedImages.map((images, index) =>
-        prisma.product_images.create({
-          data: {
-            product_id: product.id,
-            image_url: images.secure_url,
-            image_public_id: images.public_id,
-            is_main: index === 0,
-          },
-          select: {
-            id: true,
-            image_url: true,
-            image_public_id: true,
-            is_main: true,
-          },
-        }),
-      ),
-    );
-    if (!product) {
-      throw new Error("Failed to create product");
-    }
 
     return {
-      ...product,
-      price: product.price.toNumber(),
-      qty: product.qty ?? 0,
-      product_image: productImage,
+      ...result.product,
+      price: result.product.price.toNumber(),
+      qty: result.product.qty ?? 0,
+      product_image: result.productImage,
     };
   } catch (error) {
     if (uploadedImages) {
