@@ -29,12 +29,20 @@ interface UploadedImage {
   secure_url: string;
   public_id: string;
 }
-export const uploadImage = async (buffer: Buffer): Promise<UploadedImage> => {
-  const result = await uploadBufferToCloudinary(buffer);
-  return {
-    secure_url: result.secure_url,
-    public_id: result.public_id,
-  };
+
+export const uploadImage = async (
+  data: Express.Multer.File[],
+): Promise<UploadedImage[]> => {
+  const result = Promise.all(
+    data.map(async (image) => {
+      const res = await uploadBufferToCloudinary(image.buffer);
+      return {
+        secure_url: res.secure_url,
+        public_id: res.public_id,
+      };
+    }),
+  );
+  return result;
 };
 
 export const createProduct = async (

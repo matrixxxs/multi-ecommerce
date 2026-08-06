@@ -17,7 +17,7 @@ const router = express.Router();
 router.post(
   "/",
   authMiddleware,
-  upload.single("image"),
+  upload.array("image", 3),
   ValidateBody(createProduct),
   create,
 );
@@ -27,7 +27,7 @@ router.get("/:id", authMiddleware, ValidateParam(productId), productById);
 router.patch(
   "/update/:id",
   authMiddleware,
-  upload.single("image"),
+  upload.array("image", 3),
   ValidateParam(productId),
   ValidateBody(update),
   updateProductController,
