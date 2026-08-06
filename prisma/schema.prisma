@@ -1,6 +1,7 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider        = "prisma-client"
+  output          = "../generated/prisma"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
@@ -21,16 +22,15 @@ model admin_users {
 }
 
 model orders {
-  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  store_id         String    @db.Uuid
-  customer_name    String    @db.VarChar(255)
-  customer_address String    @db.VarChar(255)
-  customer_phone   String    @db.VarChar(255)
-  total            Decimal   @db.Decimal(10, 2)
-  items            Json
-  status           String    @default("pending")
-  created_at       DateTime? @default(now()) @db.Timestamptz(6)
-  stores           stores    @relation(fields: [store_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  store_id         String        @db.Uuid
+  customer_name    String        @db.VarChar(255)
+  customer_address String        @db.VarChar(255)
+  customer_phone   String        @db.VarChar(255)
+  status           String        @default("pending")
+  created_at       DateTime?     @default(now()) @db.Timestamptz(6)
+  order_items      order_items[]
+  stores           stores        @relation(fields: [store_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([store_id, status], map: "idx_orders_status")
   @@index([store_id], map: "idx_orders_store")
@@ -40,6 +40,7 @@ model orders {
 model password_reset_tokens {
   id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   admin_id    String      @db.Uuid
+  token       String      @unique
   expires_at  DateTime    @default(dbgenerated("(now() + '01:00:00'::interval)")) @db.Timestamptz(6)
   used        Boolean?    @default(false)
   created_at  DateTime?   @default(now()) @db.Timestamptz(6)
@@ -47,20 +48,23 @@ model password_reset_tokens {
 
   @@schema("ecommerce")
 }
+
 model products {
-  id              String    @id(map: "product_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  store_id        String    @db.Uuid
-  name            String    @db.VarChar(255)
-  description     String    @db.VarChar(255)
-  price           Decimal   @db.Decimal(10, 2)
-  category        String    @db.VarChar(255)
-  images     product_images[]
-  in_stock   Boolean   @default(true)
-  created_at      DateTime? @default(now()) @db.Timestamptz(6)
-  is_deleted      Boolean?  @default(false)
-  deleted_at      DateTime? @db.Timestamp(6)
-  updated_at      DateTime? @default(now()) @db.Timestamp(6)
-  stores          stores    @relation(fields: [store_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "product_store_id_fkey")
+  id          String          @id(map: "product_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  store_id    String          @db.Uuid
+  name        String          @db.VarChar(255)
+  description String          @db.VarChar(255)
+  price       Decimal         @db.Decimal(10, 2)
+  category    String          @db.VarChar(255)
+  in_stock    Boolean         @default(true)
+  created_at  DateTime?       @default(now()) @db.Timestamptz(6)
+  is_deleted  Boolean?        @default(false)
+  deleted_at  DateTime?       @db.Timestamp(6)
+  updated_at  DateTime?       @default(now()) @db.Timestamp(6)
+  qty         Int?            @default(0)
+  order_items order_items[]
+  images      product_images?
+  stores      stores          @relation(fields: [store_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "product_store_id_fkey")
 
   @@index([store_id], map: "idx_product_store")
   @@schema("ecommerce")
@@ -80,16 +84,33 @@ model stores {
   @@schema("ecommerce")
 }
 
-
 model product_images {
-  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  product_id       String    @db.Uuid
-  image_url        String
-  image_public_id  String?
-  is_main          Boolean   @default(false)
-  created_at       DateTime? @default(now()) @db.Timestamptz(6)
-  products         products  @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_id      String   @unique(map: "product_images_one_main_per_product", where: raw("(is_main = true)")) @db.Uuid
+  image_url       String   @db.VarChar
+  image_public_id String?  @db.VarChar
+  is_main         Boolean  @default(false)
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+  products        products @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([product_id], map: "idx_product_images_product")
+  @@schema("ecommerce")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model order_items {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  order_id          String    @db.Uuid
+  product_id        String?   @db.Uuid
+  product_name      String    @db.VarChar(200)
+  product_price     Decimal   @db.Decimal(10, 2)
+  product_image_url String?
+  quantity          Int
+  line_total        Decimal   @db.Decimal(10, 2)
+  created_at        DateTime? @default(now()) @db.Timestamptz(6)
+  orders            orders    @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_order")
+  products          products? @relation(fields: [product_id], references: [id], onUpdate: NoAction, map: "fk_product")
+
+  @@index([order_id], map: "idx_order_items_order_id")
   @@schema("ecommerce")
 }
