@@ -11,6 +11,7 @@ export interface CreateProduct {
   category: string;
   price: number;
   qty: number;
+  is_main: boolean;
 }
 
 export interface Product {
@@ -18,12 +19,17 @@ export interface Product {
   store_id: string;
   name: string;
   description: string;
-  image_url: string;
-  image_public_id: string | null;
+
   in_stock: boolean;
   category: string;
   price: number;
   qty: number;
+  product_image: {
+    id: string;
+    image_url: string;
+    image_public_id: string | null;
+    is_main: boolean;
+  }[];
 }
 interface UploadedImage {
   secure_url: string;
@@ -33,7 +39,7 @@ interface UploadedImage {
 export const uploadImage = async (
   data: Express.Multer.File[],
 ): Promise<UploadedImage[]> => {
-  const result = Promise.all(
+  const result = await Promise.all(
     data.map(async (image) => {
       const res = await uploadBufferToCloudinary(image.buffer);
       return {
@@ -47,15 +53,15 @@ export const uploadImage = async (
 
 export const createProduct = async (
   data: CreateProduct,
-  buffer: Buffer,
+  files: Express.Multer.File[],
   store_id: string,
 ): Promise<Product> => {
-  let uploadedImage: UploadedImage | null = null;
+  let uploadedImages: UploadedImage[] | null = null;
 
   try {
-    uploadedImage = await uploadImage(buffer);
-    const image_url = uploadedImage.secure_url;
-    const image_public_id = uploadedImage.public_id;
+    uploadedImages = await uploadImage(files);
+
+    const [mainImage] = uploadedImages;
 
     const product = await prisma.products.create({
       data: {
@@ -63,8 +69,6 @@ export const createProduct = async (
         name: data.name,
         category: data.category,
         description: data.description,
-        image_url: image_url,
-        image_public_id: image_public_id,
         price: data.price,
         in_stock: data.in_stock,
         qty: data.qty,
@@ -77,12 +81,27 @@ export const createProduct = async (
         price: true,
         description: true,
         in_stock: true,
-        image_url: true,
-        image_public_id: true,
         qty: true,
       },
     });
-
+    const productImage = await Promise.all(
+      uploadedImages.map((images, index) =>
+        prisma.product_images.create({
+          data: {
+            product_id: product.id,
+            image_url: images.secure_url,
+            image_public_id: images.public_id,
+            is_main: index === 0,
+          },
+          select: {
+            id: true,
+            image_url: true,
+            image_public_id: true,
+            is_main: true,
+          },
+        }),
+      ),
+    );
     if (!product) {
       throw new Error("Failed to create product");
     }
@@ -91,11 +110,14 @@ export const createProduct = async (
       ...product,
       price: product.price.toNumber(),
       qty: product.qty ?? 0,
+      product_image: productImage,
     };
   } catch (error) {
-    if (uploadedImage) {
+    if (uploadedImages) {
       try {
-        await deleteFromCloudinary(uploadedImage.public_id);
+        await Promise.all(
+          uploadedImages.map((Image) => deleteFromCloudinary(Image.public_id)),
+        );
       } catch (cleanupError) {
         console.error("Failed to delete image from Cloudinary:", cleanupError);
       }
