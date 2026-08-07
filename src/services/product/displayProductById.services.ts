@@ -11,7 +11,11 @@ interface GetIdResult {
   store_id: string;
   name: string;
   description: string;
-  image_url: string;
+  images: {
+    image_url: string;
+    id: string;
+    is_main: boolean;
+  }[];
   category: string;
   price: number;
   in_stock: boolean;
@@ -30,13 +34,21 @@ export const getProductByIdService = async (
     where: {
       id,
       store_id,
+      is_deleted: false,
     },
     select: {
       id: true,
       store_id: true,
       name: true,
       description: true,
-      image_url: true,
+      images: {
+        select: {
+          image_url: true,
+          id: true,
+          is_main: true,
+        },
+        orderBy: { is_main: "desc" },
+      },
       category: true,
       price: true,
       in_stock: true,

@@ -1,5 +1,5 @@
 import prisma from "../../config/prisma";
-import { Prisma } from "../../../generated/prisma/browser";
+import { Prisma } from "../../../generated/prisma/client";
 import { getStoreId } from "../../config/getStoreId";
 import { NotFound } from "../../error/error";
 export interface ProductToken {
@@ -14,10 +14,14 @@ export interface DisplayProduct {
   store_id: string;
   name: string;
   description: string;
-  image_url: string;
+  images: {
+    image_url: string;
+    id: string;
+    is_main: boolean;
+  }[];
   category: string;
   price: number;
-  in_stock: Boolean;
+  in_stock: boolean;
   qty: number | null;
 }
 
@@ -32,7 +36,7 @@ export interface Product {
 }
 
 export const display = async (
-  date: ProductToken,
+  data: ProductToken,
   slug: string,
 ): Promise<Product> => {
   const store_id = await getStoreId(slug);
@@ -40,16 +44,16 @@ export const display = async (
     store_id,
     is_deleted: false,
   };
-  if (date.name) {
+  if (data.name) {
     where.name = {
-      contains: date.name,
+      contains: data.name,
       mode: "insensitive",
     };
   }
-  if (date.category !== undefined) {
-    where.category = date.category;
+  if (data.category !== undefined) {
+    where.category = data.category;
   }
-  const offset = (date.page - 1) * date.limit;
+  const offset = (data.page - 1) * data.limit;
 
   const [row, total] = await Promise.all([
     prisma.products.findMany({
@@ -61,12 +65,19 @@ export const display = async (
         category: true,
         price: true,
         description: true,
-        image_url: true,
+        images: {
+          where: { is_main: true },
+          select: {
+            image_url: true,
+            id: true,
+            is_main: true,
+          },
+        },
         in_stock: true,
         qty: true,
       },
       orderBy: { created_at: "desc" },
-      take: date.limit,
+      take: data.limit,
       skip: offset,
     }),
     prisma.products.count({ where }),
@@ -79,10 +90,10 @@ export const display = async (
   return {
     data: finalResult,
     pagination: {
-      limit: date.limit,
+      limit: data.limit,
       total: total,
-      totalPage: Math.ceil(total / date.limit),
-      current: date.page,
+      totalPage: Math.ceil(total / data.limit),
+      current: data.page,
     },
   };
 };
