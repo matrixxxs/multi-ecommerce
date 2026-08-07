@@ -26,6 +26,15 @@ interface UpdatedProduct {
   }[];
 }
 
+interface ProductImageRecord {
+  id: string;
+  created_at: Date;
+  product_id: string;
+  image_url: string;
+  image_public_id: string | null;
+  is_main: boolean;
+}
+
 export interface UpdateProductData {
   name?: string;
   category?: string;
@@ -40,10 +49,12 @@ export const updateProduct = async (
   store_id: string,
   id: string,
   files: Express.Multer.File[],
+  image_id: string,
 ): Promise<UpdatedProduct> => {
-  let uploadImages: UpdateImage[] | null = null;
+  let uploadedImages: UpdateImage[] | null = null;
+
   try {
-    const oldImage = await prisma.products.findFirst({
+    const existingProduct = await prisma.products.findFirst({
       where: {
         id,
         store_id,
@@ -52,19 +63,16 @@ export const updateProduct = async (
         images: true,
       },
     });
-    if (!oldImage) {
+    if (!existingProduct) {
       throw new NotFound("Product not found");
     }
 
-    let image_url = oldImage.images?.image_url;
-    let public_id = oldImage.images?.image_public_id;
-
-    uploadImages = await uploadImage(files);
     if (files.length > 0) {
-      const [image] = uploadImages;
-      image_url = image.secure_url;
-      public_id = image.public_id;
+      uploadedImages = await uploadImage(files);
     }
+
+    const oldImages = existingProduct.images;
+
     const finalResult = await prisma.$transaction(async (tx) => {
       const result = await tx.products.update({
         where: { id, store_id },
@@ -87,44 +95,45 @@ export const updateProduct = async (
           qty: true,
         },
       });
+      let productImageResult: ProductImageRecord[] = (oldImages ??
+        []) as ProductImageRecord[];
+      if (uploadedImages && uploadedImages.length > 0) {
+        const deleteImage = productImageResult.find(
+          (img) => img.id === image_id,
+        );
+        const wasMain = deleteImage?.is_main ?? false;
+        await tx.product_images.deleteMany({
+          where: { id: image_id, product_id: id },
+        });
 
-      if (uploadImages && uploadImages.length > 0) {
-        await Promise.all(
-          uploadImages.map((image, index) =>
-            tx.product_images.updateMany({
-              where: { product_id: id },
+        const newImage = await Promise.all(
+          uploadedImages.map((image, index) =>
+            tx.product_images.create({
               data: {
-                image_url: image.secure_url ?? undefined,
-                image_public_id: image.public_id ?? undefined,
-                is_main: index === 0,
+                product_id: id,
+                image_url: image.secure_url,
+                image_public_id: image.public_id,
+                is_main: wasMain && index === 0,
               },
             }),
           ),
         );
+        productImageResult = [
+          ...productImageResult.filter((img) => img.id !== image_id),
+          ...newImage,
+        ];
       }
-
-      const productImageResult = await tx.product_images.findMany({
-        where: { product_id: id },
-        select: {
-          id: true,
-          image_url: true,
-          image_public_id: true,
-          is_main: true,
-        },
-      });
-
-      return {
-        result,
-        productImageResult,
-      };
+      return { result, productImageResult };
     });
-
-    if (finalResult !== null && oldImage.images?.image_public_id) {
-      await Promise.all(
-        oldImage.images.map((image) =>
-          deleteFromCloudinary(image.image_public_id!),
-        ),
+    const productImageResult: ProductImageRecord[] = (oldImages ??
+      []) as ProductImageRecord[];
+    if (uploadedImages && uploadedImages.length > 0) {
+      const deletedImage = productImageResult.find(
+        (img) => img.id === image_id,
       );
+      if (deletedImage?.image_public_id) {
+        await deleteFromCloudinary(deletedImage.image_public_id);
+      }
     }
 
     return {
@@ -136,10 +145,10 @@ export const updateProduct = async (
   } catch (error) {
     console.error("updateProduct failed:", error);
 
-    if (uploadImages) {
+    if (uploadedImages) {
       try {
-        await await Promise.all(
-          uploadImages.map((Image) => deleteFromCloudinary(Image.public_id)),
+        await Promise.all(
+          uploadedImages.map((Image) => deleteFromCloudinary(Image.public_id)),
         );
       } catch (err) {
         console.error("failed to delete orphan from cloudinary:", err);

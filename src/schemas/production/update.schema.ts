@@ -10,4 +10,5 @@ export const update = z.object({
     .optional(),
   price: z.coerce.number().optional(),
   qty: z.coerce.number().int().optional(),
+  is_main: z.enum(["true", "false"]).transform((val) => val === "true"),
 });
