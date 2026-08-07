@@ -18,7 +18,11 @@ interface Product {
   store_id: string;
   name: string;
   description: string;
-  image_url: string;
+  images: {
+    image_url: string;
+    id: string;
+    is_main: boolean;
+  }[];
   in_stock: boolean;
   category: string;
   price: number;
@@ -74,10 +78,17 @@ export const getProducts = async (
         description: true,
         price: true,
         in_stock: true,
-        image_url: true,
         store_id: true,
         created_at: true,
         qty: true,
+        images: {
+          where: { is_main: true },
+          select: {
+            image_url: true,
+            id: true,
+            is_main: true,
+          },
+        },
       },
       orderBy: { created_at: "desc" },
       take: data.limit,
@@ -89,6 +100,11 @@ export const getProducts = async (
   const finalResult = rows.map((product) => ({
     ...product,
     price: product.price.toNumber(),
+    images: product.images
+      ? Array.isArray(product.images)
+        ? product.images
+        : [product.images]
+      : [],
   }));
 
   return {

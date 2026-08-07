@@ -5,7 +5,11 @@ export interface GetProductById {
   store_id: string;
   name: string;
   description: string;
-  image_url: string;
+  images: {
+    image_url: string;
+    id: string;
+    is_main: boolean;
+  }[];
   in_stock: boolean;
   category: string;
   price: number;
@@ -29,7 +33,14 @@ export const getProductById = async (
       description: true,
       price: true,
       in_stock: true,
-      image_url: true,
+      images: {
+        select: {
+          image_url: true,
+          id: true,
+          is_main: true,
+        },
+        orderBy: { is_main: "desc" },
+      },
       store_id: true,
       created_at: true,
       qty: true,
