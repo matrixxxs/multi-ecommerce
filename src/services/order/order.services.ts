@@ -31,6 +31,21 @@ export const createOrder = async (
         in: data.items.map((product) => product.product_id),
       },
     },
+    select: {
+      price: true,
+      name: true,
+      id: true,
+      images: {
+        where: {
+          is_main: true,
+        },
+        select: {
+          image_url: true,
+          id: true,
+          is_main: true,
+        },
+      },
+    },
   });
   const orderItems = data.items.map((currentItem) => {
     const productItems = foundProducts.find(
@@ -39,10 +54,11 @@ export const createOrder = async (
     if (!productItems) {
       throw new NotFound("Product can not be found");
     }
+    const mainImage = productItems.images[0] ?? null;
     return {
       product_id: productItems.id,
       product_name: productItems.name,
-      product_image_url: productItems.image_url,
+      product_image_url: mainImage?.image_url ?? null,
       product_price: Number(productItems.price),
       quantity: currentItem.quantity,
       line_total: currentItem.quantity * Number(productItems.price),
