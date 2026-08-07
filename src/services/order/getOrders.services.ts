@@ -15,7 +15,10 @@ interface GetOrder {
   status: string;
   store_id: string;
   created_at: Date | null;
+  item_count: number;
+  total: number;
 }
+
 interface GetOrderResult {
   data: GetOrder[];
   pagination: {
@@ -25,26 +28,27 @@ interface GetOrderResult {
     totalPage: number;
   };
 }
+
 export const getOrder = async (
-  date: GetOrderToken,
+  data: GetOrderToken,
   store_id: string,
 ): Promise<GetOrderResult> => {
   const where: Prisma.ordersWhereInput = {
     store_id,
   };
-  if (date.customer_name) {
+  if (data.customer_name) {
     where.customer_name = {
-      contains: date.customer_name,
+      contains: data.customer_name,
       mode: "insensitive",
     };
   }
-  if (date.status !== undefined) {
-    where.status = date.status;
+  if (data.status !== undefined) {
+    where.status = data.status;
   }
 
-  const offset = (date.page - 1) * date.limit;
+  const offset = (data.page - 1) * data.limit;
 
-  const [row, total] = await Promise.all([
+  const [rows, total] = await Promise.all([
     prisma.orders.findMany({
       where,
       select: {
@@ -54,23 +58,35 @@ export const getOrder = async (
         status: true,
         store_id: true,
         created_at: true,
+        order_items: {
+          select: {
+            quantity: true,
+            line_total: true,
+          },
+        },
       },
       orderBy: {
         created_at: "desc",
       },
-      take: date.limit,
+      take: data.limit,
       skip: offset,
     }),
     prisma.orders.count({ where }),
   ]);
 
+  const finalResult = rows.map(({ order_items, ...order }) => ({
+    ...order,
+    item_count: order_items.length,
+    total: order_items.reduce((sum, item) => sum + Number(item.line_total), 0),
+  }));
+
   return {
-    data: row,
+    data: finalResult,
     pagination: {
       total,
-      currentPage: date.page,
-      limit: date.limit,
-      totalPage: Math.ceil(total / date.limit),
+      currentPage: data.page,
+      limit: data.limit,
+      totalPage: Math.ceil(total / data.limit),
     },
   };
 };
