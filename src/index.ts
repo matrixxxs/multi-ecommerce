@@ -18,7 +18,7 @@ app.use(express.json());
 
 app.use("/auth", authRoutes);
 app.use("/auth", resetRoutes);
-app.use("/products", crudRoutes);
+app.use("/store", crudRoutes);
 app.use("/store", orderRouter);
 app.use("/store", productRouter);
 
