@@ -1,6 +1,6 @@
 import prisma from "../../config/prisma";
 import { Prisma } from "../../../generated/prisma/client";
-import { NotFound } from "../../error/error";
+import { NotFound, ValidationError } from "../../error/error";
 import {
   uploadBufferToCloudinary,
   deleteFromCloudinary,
@@ -42,15 +42,27 @@ export interface UpdateProductData {
   price?: number;
   description?: string;
   qty?: number;
+  image_id?: string;
 }
+
+const MAX_IMAGES = 3;
 
 export const updateProduct = async (
   data: UpdateProductData,
   store_id: string,
   id: string,
   files: Express.Multer.File[],
-  image_id: string,
 ): Promise<UpdatedProduct> => {
+  if (files.length > MAX_IMAGES) {
+    throw new ValidationError(`Maximum ${MAX_IMAGES} images allowed`);
+  }
+
+  if (files.length > 0 && !data.image_id) {
+    throw new ValidationError(
+      "image_id is required when uploading a replacement image",
+    );
+  }
+
   let uploadedImages: UpdateImage[] | null = null;
 
   try {
@@ -99,11 +111,11 @@ export const updateProduct = async (
         []) as ProductImageRecord[];
       if (uploadedImages && uploadedImages.length > 0) {
         const deleteImage = productImageResult.find(
-          (img) => img.id === image_id,
+          (img) => img.id === data.image_id,
         );
         const wasMain = deleteImage?.is_main ?? false;
         await tx.product_images.deleteMany({
-          where: { id: image_id, product_id: id },
+          where: { id: data.image_id, product_id: id },
         });
 
         const newImage = await Promise.all(
@@ -119,18 +131,15 @@ export const updateProduct = async (
           ),
         );
         productImageResult = [
-          ...productImageResult.filter((img) => img.id !== image_id),
+          ...productImageResult.filter((img) => img.id !== data.image_id),
           ...newImage,
         ];
       }
       return { result, productImageResult };
     });
-    const productImageResult: ProductImageRecord[] = (oldImages ??
-      []) as ProductImageRecord[];
+
     if (uploadedImages && uploadedImages.length > 0) {
-      const deletedImage = productImageResult.find(
-        (img) => img.id === image_id,
-      );
+      const deletedImage = oldImages.find((img) => img.id === data.image_id);
       if (deletedImage?.image_public_id) {
         await deleteFromCloudinary(deletedImage.image_public_id);
       }

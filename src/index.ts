@@ -12,8 +12,8 @@ import orderRouter from "./routes/order.router";
 import productRouter from "./routes/product.router";
 
 const app = express();
-app.use(helmet());
-app.use(morgan("dev"));
+// app.use(helmet());
+// app.use(morgan("dev"));
 app.use(express.json());
 
 app.use("/auth", authRoutes);

@@ -27,3 +27,16 @@ export const ValidateParam =
     req.params = result.data as any;
     next();
   };
+
+export const ValidateQuery =
+  <T>(schema: ZodSchema<T>) =>
+  (req: Request, res: Response, next: NextFunction) => {
+    const result = schema.safeParse(req.query);
+    if (!result.success) {
+      throw new ValidationError(
+        JSON.stringify(result.error.flatten().fieldErrors),
+      );
+    }
+    Object.assign(req.query, result.data);
+    next();
+  };

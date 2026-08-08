@@ -1,6 +1,9 @@
 import express from "express";
-import { ValidateBody } from "../middleware/validat";
-import { ValidateParam } from "../middleware/validat";
+import {
+  ValidateParam,
+  ValidateQuery,
+  ValidateBody,
+} from "../middleware/validat";
 import { createProduct } from "../schemas/production/createProduct.schema";
 import { create } from "../controler/production/createProduct.controler";
 import { upload } from "../middleware/upload";
@@ -14,34 +17,32 @@ import { updateProductController } from "../controler/production/updateProduct.c
 import { DeleteProduct } from "../controler/production/deleteProduct.controler";
 import { setMainImage } from "../controler/production/setMainImage.controler";
 import { product_id_image_id } from "../schemas/production/update_image_id.schema copy";
+import {
+  productByIdParams,
+  productSlugParams,
+} from "../schemas/product/displayProductById.schema";
 const router = express.Router();
 
 router.post(
-  "/:slug/products",
+  "/products",
   authMiddleware,
   upload.array("image", 3),
   ValidateBody(createProduct),
   create,
 );
 
+router.get("/products", authMiddleware, ValidateQuery(product), getProduct);
 router.get(
-  "/:slug/products",
-  authMiddleware,
-  ValidateBody(product),
-  getProduct,
-);
-router.get(
-  "/:slug/product/:id",
+  "/product/:id",
   authMiddleware,
   ValidateParam(productId),
   productById,
 );
 router.patch(
-  "/:slug/products/:id/images/:imageId/edit-product",
+  "/products/:id",
   authMiddleware,
   upload.array("image", 3),
   ValidateParam(productId),
-  ValidateBody(update),
   updateProductController,
 );
 router.patch(

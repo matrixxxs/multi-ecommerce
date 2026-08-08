@@ -5,17 +5,20 @@ import {
   UpdateProductData,
   updateProduct,
 } from "../../services/production/update.services";
-import { ValidationError } from "../../error/error";
+import { productId } from "../../schemas/production/getProductsById.schema";
 export const updateProductController = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
-  const data = req.body as UpdateProductData;
-  const { store_id } = req.admin as { store_id: string };
-  const { id } = product_id_image_id.parse(req.params);
-  const { image_id } = product_id_image_id.parse(req.params);
-  const files = req.files as Express.Multer.File[];
-  const result = await updateProduct(data, store_id, id, files, image_id);
-  res.status(200).json(result);
+  try {
+    const data = req.body as UpdateProductData;
+    const { store_id } = req.admin as { store_id: string };
+    const { id } = productId.parse(req.params);
+    const files = req.files as Express.Multer.File[];
+    const result = await updateProduct(data, store_id, id, files);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
 };
