@@ -6,11 +6,10 @@ export const authMiddleware = (
   res: Response,
   next: NextFunction,
 ) => {
-  const authHeader = req.header("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const token = req.cookies.token;
+  if (!token) {
     throw new UnauthorizedError("Access denied");
   }
-  const token = authHeader.split(" ")[1] as string;
   try {
     const decoded = verifyToken(token);
     req.admin = decoded;

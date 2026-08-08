@@ -10,10 +10,17 @@ import resetRoutes from "./routes/reset.routes";
 import crudRoutes from "./routes/CRUD.routes";
 import orderRouter from "./routes/order.router";
 import productRouter from "./routes/product.router";
+import cors from "cors";
 
 const app = express();
-// app.use(helmet());
-// app.use(morgan("dev"));
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  }),
+);
+app.use(helmet());
+app.use(morgan("dev"));
 app.use(express.json());
 
 app.use("/auth", authRoutes);

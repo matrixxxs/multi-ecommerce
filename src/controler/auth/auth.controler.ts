@@ -27,5 +27,11 @@ export const login = async (
   const { email, password } = req.body;
   const user = await verifyCreditals(email, password);
   const token = signinToken({ admin_id: user.id, store_id: user.store_id });
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 4 * 24 * 60 * 60 * 1000,
+  });
   res.status(200).json({ user, token });
 };
