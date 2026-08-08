@@ -8,7 +8,7 @@ export const authMiddleware = (
 ) => {
   const token = req.cookies.token;
   if (!token) {
-    throw new UnauthorizedError("Access denied");
+    return next(new UnauthorizedError("Access denied"));
   }
   try {
     const decoded = verifyToken(token);
