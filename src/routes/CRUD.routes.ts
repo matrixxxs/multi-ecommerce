@@ -47,7 +47,7 @@ router.patch(
 router.patch(
   "/products/:id/images/:imageId/set-main",
   authMiddleware,
-  ValidateParam(productId),
+  ValidateParam(product_id_image_id),
   setMainImage,
 );
 router.patch(
