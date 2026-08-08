@@ -1,6 +1,6 @@
 import z from "zod";
 
-export const update = z.object({
+export const updateScheme = z.object({
   name: z.string().trim().min(3).optional(),
   description: z.string().min(10).optional(),
   category: z.string().optional(),

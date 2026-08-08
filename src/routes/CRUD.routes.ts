@@ -12,7 +12,6 @@ import { product } from "../schemas/production/getProducts.schema";
 import { getProduct } from "../controler/production/getProducts.controler";
 import { productById } from "../controler/production/getProductById.controler";
 import { productId } from "../schemas/production/getProductsById.schema";
-import { update } from "../schemas/production/update.schema";
 import { updateProductController } from "../controler/production/updateProduct.contorler";
 import { DeleteProduct } from "../controler/production/deleteProduct.controler";
 import { setMainImage } from "../controler/production/setMainImage.controler";
@@ -46,13 +45,13 @@ router.patch(
   updateProductController,
 );
 router.patch(
-  "/:slug/products/:id/images/:imageId/set-main",
+  "/products/:id/images/:imageId/set-main",
   authMiddleware,
-  ValidateParam(product_id_image_id),
+  ValidateParam(productId),
   setMainImage,
 );
 router.patch(
-  "/:slug/product/delete/:id",
+  "/product/delete/:id",
   authMiddleware,
   ValidateParam(productId),
   DeleteProduct,
