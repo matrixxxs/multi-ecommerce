@@ -10,6 +10,7 @@ import resetRoutes from "./routes/reset.routes";
 import crudRoutes from "./routes/CRUD.routes";
 import orderRouter from "./routes/order.router";
 import productRouter from "./routes/product.router";
+import dashboardRouter from "./routes/dashboard";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
@@ -30,7 +31,7 @@ app.use("/auth", resetRoutes);
 app.use("/store", crudRoutes);
 app.use("/store", orderRouter);
 app.use("/store", productRouter);
-
+app.use("/dashboard", dashboardRouter);
 app.use(errorHandler);
 app.listen(5000, () => {
   console.log("server is running on port 5000");
