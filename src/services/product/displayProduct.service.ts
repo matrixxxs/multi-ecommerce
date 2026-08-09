@@ -31,7 +31,7 @@ export interface Product {
     limit: number;
     total: number;
     totalPage: number;
-    current: number;
+    currentPage: number;
   };
 }
 
@@ -93,7 +93,7 @@ export const display = async (
       limit: data.limit,
       total: total,
       totalPage: Math.ceil(total / data.limit),
-      current: data.page,
+      currentPage: data.page,
     },
   };
 };
