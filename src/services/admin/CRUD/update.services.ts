@@ -1,10 +1,10 @@
-import prisma from "../../config/prisma";
-import { Prisma } from "../../../generated/prisma/client";
-import { NotFound, ValidationError } from "../../error/error";
+import prisma from "../../../config/prisma";
+import { Prisma } from "../../../../generated/prisma/client";
+import { NotFound, ValidationError } from "../../../error/error";
 import {
   uploadBufferToCloudinary,
   deleteFromCloudinary,
-} from "../../utils/uploadToClodinary";
+} from "../../../utils/uploadToClodinary";
 import { uploadImage } from "./createProduct.service";
 export interface UpdateImage {
   secure_url: string;

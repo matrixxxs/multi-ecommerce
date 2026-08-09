@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { product_id_image_id } from "../../schemas/production/update_image_id.schema copy";
-import { setMainImageServices } from "../../services/production/setMainImage.services";
+import { setMainImageServices } from "../../services/admin/CRUD/setMainImage.services";
 
 export const setMainImage = async (
   req: Request,

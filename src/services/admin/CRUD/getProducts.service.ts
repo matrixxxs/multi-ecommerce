@@ -1,5 +1,5 @@
-import prisma from "../../config/prisma";
-import { Prisma } from "../../../generated/prisma/client";
+import prisma from "../../../config/prisma";
+import { Prisma } from "../../../../generated/prisma/client";
 
 // Input shape after schema validation + store_id from JWT
 export interface ProductTokens {
@@ -100,11 +100,6 @@ export const getProducts = async (
   const finalResult = rows.map((product) => ({
     ...product,
     price: product.price.toNumber(),
-    images: product.images
-      ? Array.isArray(product.images)
-        ? product.images
-        : [product.images]
-      : [],
   }));
 
   return {

@@ -1,9 +1,9 @@
-import pool from "../../config/db";
-import prisma from "../../config/prisma";
+import pool from "../../../config/db";
+import prisma from "../../../config/prisma";
 import {
   uploadBufferToCloudinary,
   deleteFromCloudinary,
-} from "../../utils/uploadToClodinary";
+} from "../../../utils/uploadToClodinary";
 export interface CreateProduct {
   name: string;
   description: string;

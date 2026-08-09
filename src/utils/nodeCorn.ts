@@ -1,5 +1,5 @@
 import nodeCron from "node-cron";
-import { cleanupDeletedProducts } from "../services/production/deleteProduct.service";
+import { cleanupDeletedProducts } from "../services/admin/CRUD/deleteProduct.service";
 
 nodeCron.schedule("0 3 * * *", async () => {
   console.log("Running product cleanup job...");

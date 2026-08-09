@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { FakeStatus } from "../error/error";
+import { FakeStatus } from "../../../error/error";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 

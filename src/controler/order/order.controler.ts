@@ -1,7 +1,7 @@
 import express from "express";
 import { Request, Response, NextFunction } from "express";
 import { order_schema } from "../../schemas/orders/order.scheme";
-import { createOrder } from "../../services/order/order.services";
+import { createOrder } from "../../services/admin/order/order.services";
 
 const CreateOrders = async (
   req: Request,

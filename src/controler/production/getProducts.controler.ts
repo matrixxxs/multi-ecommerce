@@ -1,6 +1,6 @@
 import { string } from "zod";
 import { product } from "../../schemas/production/getProducts.schema";
-import { getProducts } from "../../services/production/getProducts.service";
+import { getProducts } from "../../services/admin/CRUD/getProducts.service";
 import { Request, Response, NextFunction } from "express";
 export const getProduct = async (
   req: Request,

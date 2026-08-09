@@ -1,7 +1,7 @@
-import { deleteFromCloudinary } from "../../utils/uploadToClodinary";
-import prisma from "../../config/prisma";
-import { Prisma } from "../../../generated/prisma/client";
-import { NotFound } from "../../error/error";
+import { deleteFromCloudinary } from "../../../utils/uploadToClodinary";
+import prisma from "../../../config/prisma";
+import { Prisma } from "../../../../generated/prisma/client";
+import { NotFound } from "../../../error/error";
 
 export const deleteProduct = async (
   store_id: string,

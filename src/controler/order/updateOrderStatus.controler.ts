@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { updateOrderStatus } from "../../services/order/updateOrderStatus.services";
+import { updateOrderStatus } from "../../services/admin/order/updateOrderStatus.services";
 import { updateOrderStatusSchema } from "../../schemas/orders/updateOrderStatus.schema";
 import { productId } from "../../schemas/production/getProductsById.schema";
 

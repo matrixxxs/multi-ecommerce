@@ -1,7 +1,7 @@
-import prisma from "../../config/prisma";
-import { getStoreId } from "../../config/getStoreId";
-import { NotFound, OutOfStock } from "../../error/error";
-import { order_schema } from "../../schemas/orders/order.scheme";
+import prisma from "../../../config/prisma";
+import { getStoreId } from "../../../config/getStoreId";
+import { NotFound, OutOfStock } from "../../../error/error";
+import { order_schema } from "../../../schemas/orders/order.scheme";
 import z from "zod";
 type OrdersData = z.infer<typeof order_schema>;
 interface OrdersDetails {

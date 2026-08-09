@@ -1,14 +1,14 @@
-import prisma from "../config/prisma";
-import { Prisma } from "../../generated/prisma/client";
+import prisma from "../../../config/prisma";
+import { Prisma } from "../../../../generated/prisma/client";
 import bcrypt from "bcrypt";
-import pool from "../config/db";
+import pool from "../../../config/db";
 import crypto from "crypto";
 import {
   UnauthorizedError,
   FakeStatus,
   ConflictError,
   NotAllowed,
-} from "../error/error";
+} from "../../../error/error";
 const SALTROUND = 10;
 
 interface CreateUsers {

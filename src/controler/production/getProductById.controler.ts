@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { getProductById } from "../../services/production/getProductById.service";
+import { getProductById } from "../../services/admin/CRUD/getProductById.service";
 import { productId } from "../../schemas/production/getProductsById.schema";
 export const productById = async (
   req: Request,

@@ -1,5 +1,5 @@
-import prisma from "../../config/prisma";
-import { NotFound } from "../../error/error";
+import prisma from "../../../config/prisma";
+import { NotFound } from "../../../error/error";
 export interface GetProductById {
   id: string;
   store_id: string;

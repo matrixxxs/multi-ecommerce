@@ -3,7 +3,7 @@ import { ValidationError } from "../../error/error";
 import {
   CreateProduct,
   createProduct,
-} from "../../services/production/createProduct.service";
+} from "../../services/admin/CRUD/createProduct.service";
 
 export const create = async (req: Request, res: Response): Promise<void> => {
   const { store_id } = req.admin as { store_id: string };

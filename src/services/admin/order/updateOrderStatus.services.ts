@@ -1,5 +1,5 @@
-import prisma from "../../config/prisma";
-import { NotAllowed, NotFound, OutOfStock } from "../../error/error";
+import prisma from "../../../config/prisma";
+import { NotAllowed, NotFound, OutOfStock } from "../../../error/error";
 
 interface UpdatedOrder {
   id: string;

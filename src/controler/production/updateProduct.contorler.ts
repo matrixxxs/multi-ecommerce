@@ -3,7 +3,7 @@ import { product_id_image_id } from "../../schemas/production/update_image_id.sc
 import {
   UpdateProductData,
   updateProduct,
-} from "../../services/production/update.services";
+} from "../../services/admin/CRUD/update.services";
 import { productId } from "../../schemas/production/getProductsById.schema";
 import { updateScheme } from "../../schemas/production/update.schema";
 export const updateProductController = async (

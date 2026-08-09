@@ -1,5 +1,5 @@
 import { getOrderSchema } from "../../schemas/orders/getOrders.schema";
-import { getOrder } from "../../services/order/getOrders.services";
+import { getOrder } from "../../services/admin/order/getOrders.services";
 import { Request, Response, NextFunction } from "express";
 export const GetOrder = async (
   req: Request,

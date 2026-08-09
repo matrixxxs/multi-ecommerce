@@ -1,7 +1,7 @@
-import prisma from "../config/prisma";
-import { Prisma } from "../../generated/prisma/client";
-import pool from "../config/db";
-import { NotAllowed, FakeStatus } from "../error/error";
+import prisma from "../../../config/prisma";
+import { Prisma } from "../../../../generated/prisma/client";
+import pool from "../../../config/db";
+import { NotAllowed, FakeStatus } from "../../../error/error";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 
