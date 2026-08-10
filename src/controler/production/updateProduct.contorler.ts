@@ -15,7 +15,7 @@ export const updateProductController = async (
     const data = updateScheme.parse(req.body);
     const { store_id } = req.admin as { store_id: string };
     const { id } = productId.parse(req.params);
-    const files = req.files as Express.Multer.File[];
+    const files = (req.files as Express.Multer.File[]) || [];
     const result = await updateProduct(data, store_id, id, files);
     res.status(200).json(result);
   } catch (error) {

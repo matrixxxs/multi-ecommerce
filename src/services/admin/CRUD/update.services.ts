@@ -18,7 +18,7 @@ interface UpdatedProduct {
   price: number;
   description: string;
   qty: number;
-  product_image: {
+  images: {
     id: string;
     image_url: string;
     image_public_id: string | null;
@@ -51,7 +51,7 @@ export const updateProduct = async (
   data: UpdateProductData,
   store_id: string,
   id: string,
-  files: Express.Multer.File[],
+  files: Express.Multer.File[] = [],
 ): Promise<UpdatedProduct> => {
   if (files.length > MAX_IMAGES) {
     throw new ValidationError(`Maximum ${MAX_IMAGES} images allowed`);
@@ -149,7 +149,7 @@ export const updateProduct = async (
       ...finalResult.result,
       price: finalResult.result.price.toNumber(),
       qty: finalResult.result.qty ?? 0,
-      product_image: finalResult.productImageResult,
+      images: finalResult.productImageResult,
     };
   } catch (error) {
     console.error("updateProduct failed:", error);

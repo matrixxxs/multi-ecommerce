@@ -22,8 +22,8 @@ app.use(
     credentials: true,
   }),
 );
-app.use(helmet());
-app.use(morgan("dev"));
+// app.use(helmet());
+// app.use(morgan("dev"));
 app.use(express.json());
 
 app.use("/auth", authRoutes);
