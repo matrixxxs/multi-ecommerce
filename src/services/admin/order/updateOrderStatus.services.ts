@@ -1,5 +1,16 @@
 import prisma from "../../../config/prisma";
 import { NotAllowed, NotFound, OutOfStock } from "../../../error/error";
+import { formatOrderItems } from "../../../utils/formatOrderItems";
+
+interface OrderItem {
+  id: string;
+  product_id: string | null;
+  product_name: string;
+  product_image_url: string | null;
+  product_price: number;
+  quantity: number;
+  line_total: number;
+}
 
 interface UpdatedOrder {
   id: string;
@@ -8,6 +19,8 @@ interface UpdatedOrder {
   status: string;
   store_id: string;
   created_at: Date | null;
+  items: OrderItem[];
+  total: number;
 }
 
 type OrderStatus =
@@ -36,8 +49,25 @@ export const updateOrderStatus = async (
         id,
         store_id,
       },
-      include: {
-        order_items: true,
+      select: {
+        id: true,
+        customer_name: true,
+        customer_phone: true,
+        status: true,
+        store_id: true,
+        created_at: true,
+
+        order_items: {
+          select: {
+            id: true,
+            product_id: true,
+            product_name: true,
+            product_image_url: true,
+            product_price: true,
+            quantity: true,
+            line_total: true,
+          },
+        },
       },
     });
 
@@ -76,12 +106,14 @@ export const updateOrderStatus = async (
         });
 
         if (result.count === 0) {
-          throw new OutOfStock("Product is out of stock");
+          throw new OutOfStock(
+            `Product "${item.product_name}" is out of stock`,
+          );
         }
       }
     }
 
-    // When cancelling order, return items back to stock
+    // When cancelling a confirmed order, return items to stock
     if (currentStatus === "confirmed" && status === "cancelled") {
       for (const item of findOrder.order_items) {
         if (!item.product_id) {
@@ -101,7 +133,8 @@ export const updateOrderStatus = async (
       }
     }
 
-    return tx.orders.update({
+    // Update order status
+    const order = await tx.orders.update({
       where: {
         id,
         store_id,
@@ -110,6 +143,25 @@ export const updateOrderStatus = async (
         status,
       },
     });
+
+    const itemsForFormatting = findOrder.order_items.map((item) => ({
+      ...item,
+      product_price: item.product_price.toNumber(),
+      line_total: item.line_total.toNumber(),
+    }));
+
+    const { items, total } = formatOrderItems(itemsForFormatting);
+
+    return {
+      id: order.id,
+      customer_name: order.customer_name,
+      customer_phone: order.customer_phone,
+      status: order.status,
+      store_id: order.store_id,
+      created_at: order.created_at,
+      items,
+      total,
+    };
   });
 
   return updatedOrder;

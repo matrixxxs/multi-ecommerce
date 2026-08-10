@@ -1,5 +1,6 @@
 import prisma from "../../../config/prisma";
 import { NotFound } from "../../../error/error";
+import { formatOrderItems } from "../../../utils/formatOrderItems";
 
 export interface GetId {
   id: string;
@@ -60,14 +61,13 @@ export const getOrderByIdService = async (
     throw new NotFound("Order not found");
   }
 
-  const items = result.order_items.map((item) => ({
+  const itemsForFormatting = result.order_items.map((item) => ({
     ...item,
-    product_price: Number(item.product_price),
-    line_total: Number(item.line_total),
+    product_price: item.product_price.toNumber(),
+    line_total: item.line_total.toNumber(),
   }));
 
-  const total = items.reduce((sum, item) => sum + item.line_total, 0);
-
+  const { items, total } = formatOrderItems(itemsForFormatting);
   return {
     id: result.id,
     customer_name: result.customer_name,
