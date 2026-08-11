@@ -145,3 +145,4 @@ vite.config.ts.timestamp-*
 /generated/prisma
 
 /generated/prisma
+prisma.config.js
