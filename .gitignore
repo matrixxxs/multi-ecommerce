@@ -146,3 +146,8 @@ vite.config.ts.timestamp-*
 
 /generated/prisma
 prisma.config.js
+
+# Local AI coding assistant skills
+.claude/
+.agents/
+.windsurf/
